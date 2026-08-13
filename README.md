@@ -156,6 +156,11 @@ where the procedure is deterministic:
 Remaining differences are the RNG only: R's `sample()` and NumPy's generator draw different
 subsets, so percentile bounds differ in the fourth decimal.
 
+## Contributors
+
+- **Rui Zhu** ([@huthvincent](https://github.com/huthvincent)) — Yale School of Medicine
+- **Xiaopu Zhou** — The Hospital for Sick Children (SickKids)
+
 ## Citation
 
 Manuscript in preparation. Please cite the live database until the paper appears:
@@ -164,3 +169,8 @@ Manuscript in preparation. Please cite the live database until the paper appears
 > interpretation. <https://huthvincent-evo2-database.hf.space>
 
 Supplementary material for the manuscript is in [`docs/supplementary/`](docs/supplementary).
+
+## License
+
+Released under the [MIT License](LICENSE). The variant data is distributed separately and is not
+covered by this license.
