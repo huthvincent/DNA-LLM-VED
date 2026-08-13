@@ -1,0 +1,137 @@
+title: Evo2 Variant Effect Database
+description_html: |-
+  <p><strong>Evo2-DB</strong> provides genome-scale variant-effect predictions from the
+  <a href="https://github.com/ArcInstitute/evo2">Evo2</a> DNA foundation model
+  (7B and 40B parameters) for <strong>6,475,578 common autosomal human variants</strong>
+  (GRCh38, chr1&ndash;22, gnomAD NFE MAF&nbsp;&ge;&nbsp;5%). For each variant we report the
+  model's <em>delta log-likelihood</em> score (ALT&nbsp;&minus;&nbsp;REF) under three
+  reverse-complement strategies (noRC / avgRC / weightRC), alongside Ensembl gene &amp;
+  exonic-function annotation, RepeatMasker repeat class, ENCODE cCRE category,
+  phastCons/phyloP 100-way conservation, and <strong>gnomAD v4.1 <em>joint</em> allele
+  frequencies across nine populations</strong> (joint + 8 ancestry-specific AFs).</p>
+  <p><em>For research use only &mdash; not validated for clinical interpretation.</em></p>
+license: Apache License 2.0
+license_url: https://www.apache.org/licenses/LICENSE-2.0
+extra_css_urls:
+  - /static/custom.css
+databases:
+  evo2:
+    tables:
+      variants:
+        label_column: RSID
+        fts_table: variants_fts
+        fts_pk: rowid
+        sort_desc: Evo2_40B_NoRC_Delta
+        facets:
+          - Functional_Annotation
+          - ENCODE_cCRE_Annotation
+          - Exonic_Function
+          - Repeat_Class
+        sortable_columns:
+          - Variant_ID
+          - Chromosome
+          - Position
+          - RSID
+          - Joint_AF
+          - Non_Finnish_European_AF
+          - Evo2_7B_NoRC_Delta
+          - Evo2_40B_NoRC_Delta
+          - PhastCons_100way
+          - PhyloP_100way
+        description_html: |-
+          One row per variant. <code>Variant_ID</code> = Chromosome:Position:Ref:Alt (GRCh38).
+          Allele frequencies are gnomAD v4.1 <em>joint</em> (joint + 8 ancestries).
+          Free-text search box covers rsID, gene symbol and amino-acid change.
+        columns:
+          Variant_ID: "Unique key Chromosome:Position:Ref:Alt (GRCh38)"
+          RSID: "dbSNP Reference SNP ID (build 156)"
+          Chromosome: "Chromosome (1-22; autosomes only)"
+          Position: "Genomic base-pair position (GRCh38)"
+          Reference_Allele: "Reference allele (GRCh38)"
+          Alternate_Allele: "Alternate (non-reference) allele"
+          Joint_AF: "gnomAD v4.1 joint alternate-allele frequency (all ancestries combined)"
+          African_AF: "gnomAD v4.1 joint AF, African / African-American"
+          Admixed_American_AF: "gnomAD v4.1 joint AF, Admixed American"
+          Ashkenazi_Jewish_AF: "gnomAD v4.1 joint AF, Ashkenazi Jewish"
+          East_Asian_AF: "gnomAD v4.1 joint AF, East Asian"
+          Finnish_AF: "gnomAD v4.1 joint AF, Finnish"
+          Middle_Eastern_AF: "gnomAD v4.1 joint AF, Middle Eastern"
+          Non_Finnish_European_AF: "gnomAD v4.1 joint AF, Non-Finnish European (the MAF >= 5% inclusion cohort)"
+          South_Asian_AF: "gnomAD v4.1 joint AF, South Asian"
+          ENCODE_cCRE_Annotation: "ENCODE cCRE functional category"
+          Repeat_Name: "RepeatMasker repeat name"
+          Repeat_Class: "RepeatMasker repeat class (LINE/SINE/LTR/DNA...)"
+          Repeat_Family: "RepeatMasker repeat family"
+          Functional_Annotation: "ANNOVAR/Ensembl region class (intergenic, intronic, exonic...)"
+          Gene: "Ensembl gene symbol(s) at/near the variant"
+          Gene_Detail: "Transcript / distance detail (ANNOVAR)"
+          Exonic_Function: "Coding consequence (nonsynonymous/synonymous/stopgain...)"
+          Amino_Acid_Change: "Amino-acid change & transcript (coding variants only)"
+          PhastCons_100way: "phastCons conservation, 100-way vertebrate (0-1)"
+          PhyloP_100way: "phyloP conservation, 100-way vertebrate (signed)"
+          Evo2_7B_NoRC_Ref: "Evo2-7B log-likelihood, REF sequence (no reverse-complement)"
+          Evo2_7B_NoRC_Alt: "Evo2-7B log-likelihood, ALT sequence (no reverse-complement)"
+          Evo2_7B_NoRC_Delta: "Evo2-7B delta (ALT - REF); more negative = more disruptive"
+          Evo2_7B_AvgRC_Ref: "Evo2-7B log-likelihood, REF (avg of forward + reverse-complement)"
+          Evo2_7B_AvgRC_Alt: "Evo2-7B log-likelihood, ALT (avg of forward + reverse-complement)"
+          Evo2_7B_AvgRC_Delta: "Evo2-7B delta (ALT - REF), avgRC strategy"
+          Evo2_7B_WeightedRC_Ref: "Evo2-7B log-likelihood, REF (length-weighted RC)"
+          Evo2_7B_WeightedRC_Alt: "Evo2-7B log-likelihood, ALT (length-weighted RC)"
+          Evo2_7B_WeightedRC_Delta: "Evo2-7B delta (ALT - REF), weightRC strategy"
+          Evo2_40B_NoRC_Ref: "Evo2-40B log-likelihood, REF sequence (no reverse-complement)"
+          Evo2_40B_NoRC_Alt: "Evo2-40B log-likelihood, ALT sequence (no reverse-complement)"
+          Evo2_40B_NoRC_Delta: "Evo2-40B delta (ALT - REF); more negative = more disruptive"
+          Evo2_40B_AvgRC_Ref: "Evo2-40B log-likelihood, REF (avg of forward + reverse-complement)"
+          Evo2_40B_AvgRC_Alt: "Evo2-40B log-likelihood, ALT (avg of forward + reverse-complement)"
+          Evo2_40B_AvgRC_Delta: "Evo2-40B delta (ALT - REF), avgRC strategy"
+          Evo2_40B_WeightedRC_Ref: "Evo2-40B log-likelihood, REF (length-weighted RC)"
+          Evo2_40B_WeightedRC_Alt: "Evo2-40B log-likelihood, ALT (length-weighted RC)"
+          Evo2_40B_WeightedRC_Delta: "Evo2-40B delta (ALT - REF), weightRC strategy"
+    queries:
+      lookup_by_rsid:
+        title: "Look up a variant by rsID"
+        description: "Exact dbSNP rsID, e.g. rs429358"
+        sql: |-
+          SELECT Variant_ID, RSID, Chromosome, Position, Reference_Allele, Alternate_Allele,
+                 Joint_AF, Non_Finnish_European_AF,
+                 Evo2_7B_NoRC_Delta, Evo2_40B_NoRC_Delta,
+                 Functional_Annotation, Gene, Exonic_Function, Amino_Acid_Change,
+                 ENCODE_cCRE_Annotation, PhastCons_100way, PhyloP_100way
+          FROM variants
+          WHERE RSID = :rsid
+      lookup_by_region:
+        title: "Browse a genomic region"
+        description: "Chromosome (1-22) and a base-pair window (GRCh38)"
+        sql: |-
+          SELECT Variant_ID, RSID, Position, Reference_Allele, Alternate_Allele,
+                 Joint_AF, Non_Finnish_European_AF,
+                 Evo2_7B_NoRC_Delta, Evo2_40B_NoRC_Delta,
+                 Functional_Annotation, Gene, ENCODE_cCRE_Annotation
+          FROM variants
+          WHERE Chromosome = :chr AND Position BETWEEN :start AND :end
+          ORDER BY Position
+          LIMIT 6000
+      gene_top_impact:
+        title: "Top predicted-impact variants in a gene"
+        description: "Gene symbol, e.g. APOE - ranked by |Evo2-40B delta|"
+        sql: |-
+          SELECT Variant_ID, RSID, Chromosome, Position, Reference_Allele, Alternate_Allele,
+                 Joint_AF, Evo2_40B_NoRC_Delta, Evo2_7B_NoRC_Delta,
+                 Functional_Annotation, Exonic_Function, Amino_Acid_Change, ENCODE_cCRE_Annotation
+          FROM variants
+          WHERE Gene LIKE '%' || :gene || '%'
+          ORDER BY abs(Evo2_40B_NoRC_Delta) DESC
+          LIMIT 1000
+      high_impact_coding:
+        title: "Strongest-effect protein-coding variants"
+        description: "Nonsynonymous / stopgain / stoploss / startloss, ranked by |Evo2-40B delta|"
+        sql: |-
+          SELECT Variant_ID, RSID, Chromosome, Position, Reference_Allele, Alternate_Allele, Gene,
+                 Exonic_Function, Amino_Acid_Change,
+                 Evo2_40B_NoRC_Delta, Evo2_7B_NoRC_Delta,
+                 PhastCons_100way, PhyloP_100way
+          FROM variants
+          WHERE Exonic_Function IN
+                ('nonsynonymous SNV','stopgain','stoploss','startloss')
+          ORDER BY abs(Evo2_40B_NoRC_Delta) DESC
+          LIMIT 1000

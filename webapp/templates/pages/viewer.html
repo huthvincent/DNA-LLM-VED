@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Regional-Level Analysis — Evo2 Variant Effect Database{% endblock %}
+{% block body_class %}evo2-doc-body{% endblock %}
+{% block extra_head %}<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>{% endblock %}
+
+{% block content %}
+<div class="evo2-wrap">
+  <div class="evo2-masthead">
+    <div class="evo2-brand">
+      <span class="evo2-logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 3c0 6 14 12 14 18M19 3c0 6-14 12-14 18"/><path d="M6.5 6h11M6 10h12M6 14h12M6.5 18h11"/></svg></span>
+      <span class="evo2-wordmark">Evo2 Variant Effect Database</span>
+      <nav class="evo2-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/regionset">Region sets</a>
+        <a href="/gwas">GWAS</a>
+        <a href="/coloc">Co-localization</a>
+        <a href="/about">About &amp; feature scheme</a>
+        <a href="/evo2">Run SQL</a>
+      </nav>
+    </div>
+    <div class="evo2-tagrow"><p class="evo2-tagline">Regional-Level Analysis — Evo2 score distributions, model concordance, and the locus landscape for any gene or genomic window.</p></div>
+  </div>
+
+  <form class="evo2-viewer-form" method="get" action="/viewer">
+    <div class="vf-field"><label for="v-gene">Gene</label><input id="v-gene" name="gene" placeholder="APOE" autocomplete="off"></div>
+    <span class="evo2-or">or</span>
+    <div class="vf-field vf-chr"><label for="v-chr">Chr</label><input id="v-chr" name="chr" placeholder="19" inputmode="numeric" autocomplete="off"></div>
+    <div class="vf-field"><label for="v-start">Start</label><input id="v-start" name="start" placeholder="43900000" inputmode="numeric" autocomplete="off"></div>
+    <div class="vf-field"><label for="v-end">End</label><input id="v-end" name="end" placeholder="45900000" inputmode="numeric" autocomplete="off"></div>
+    <div class="vf-field"><label for="v-model">Evo2 model</label>
+      <select id="v-model" name="model">
+        <option value="Evo2_40B_NoRC_Delta">40B · noRC</option>
+        <option value="Evo2_40B_AvgRC_Delta">40B · avgRC</option>
+        <option value="Evo2_40B_WeightedRC_Delta">40B · wtRC</option>
+        <option value="Evo2_7B_NoRC_Delta">7B · noRC</option>
+        <option value="Evo2_7B_AvgRC_Delta">7B · avgRC</option>
+        <option value="Evo2_7B_WeightedRC_Delta">7B · wtRC</option>
+      </select>
+    </div>
+    <button type="submit">Analyze</button>
+  </form>
+
+  <p id="v-status" class="evo2-help"></p>
+
+  <div id="v-tabs" class="evo2-tabs" style="display:none">
+    <button class="evo2-tab is-active" data-tab="strat">A · B  Regional stratification</button>
+    <button class="evo2-tab" data-tab="conc">C  Model concordance</button>
+    <button class="evo2-tab" data-tab="land">D  Locus landscape</button>
+  </div>
+
+  <section class="evo2-tabpane is-active" data-pane="strat">
+    <div id="panelA" class="evo2-chart" style="height:420px;"></div>
+    <div id="statsA" class="evo2-stats-tbl"></div>
+    <div id="panelB" class="evo2-chart" style="height:380px;margin-top:1rem;"></div>
+    <div id="statsB" class="evo2-stats-tbl"></div>
+  </section>
+  <section class="evo2-tabpane" data-pane="conc" style="display:none">
+    <div id="panelC" class="evo2-chart" style="height:470px;"></div>
+    <p class="evo2-help">Spearman ρ among the six model × strand-strategy configurations, computed on the queried variants (pairwise-complete).</p>
+  </section>
+  <section class="evo2-tabpane" data-pane="land" style="display:none">
+    <div id="panelD" class="evo2-chart" style="height:460px;"></div>
+    <p class="evo2-help">|Evo2 Δ| (log scale) along the locus; colour = signed Δ (red disfavoured → green tolerated). Drag to zoom.</p>
+  </section>
+
+  <p id="v-links" class="evo2-foot-meta"></p>
+  <div id="v-export" class="evo2-export" style="display:none">Export&nbsp;&#9656;
+    <button type="button" data-png="panelA">Panel A PNG</button>
+    <button type="button" data-png="panelB">Panel B PNG</button>
+    <button type="button" data-png="panelC">Panel C PNG</button>
+    <button type="button" data-png="panelD">Panel D PNG</button>
+    <button type="button" id="v-dlcsv">stats CSV</button>
+    <button type="button" id="v-dljson">analysis JSON</button>
+  </div>
+  <p class="evo2-help">Δ = log P(ALT) − log P(REF). Panels A/B show |Δ| stratified by region / consequence with group mean ± SEM, two reference lines (selected-set mean, genome-wide mean), and one-sample tests (t or Wilcoxon; BH-adjusted). Research use only. With no query, this page shows the APOE locus by default.</p>
+
+  {% raw %}
+  <style>
+  .evo2-tabs{display:flex;gap:.4rem;margin:.4rem 0 1rem;flex-wrap:wrap}
+  .evo2-tab{padding:.5rem .9rem;border:1px solid var(--c-border,#E2E8F0);background:#fff;border-radius:8px;cursor:pointer;font-size:.92rem;color:var(--c-muted,#475569)}
+  .evo2-tab.is-active{background:var(--c-accent,#2563EB);color:#fff;border-color:var(--c-accent,#2563EB)}
+  .evo2-stats-tbl{overflow-x:auto;margin:.2rem 0 .6rem}
+  .evo2-stats-tbl table{border-collapse:collapse;font-size:.82rem;width:100%}
+  .evo2-stats-tbl th,.evo2-stats-tbl td{border-bottom:1px solid #EEF2F7;padding:.3rem .55rem;text-align:right;white-space:nowrap}
+  .evo2-stats-tbl th:first-child,.evo2-stats-tbl td:first-child{text-align:left}
+  .evo2-stats-tbl th{color:#475569;font-weight:600;background:#F8FAFC}
+  .evo2-sig{color:#C0392B;font-weight:700}
+  .evo2-nsig{color:#94A3B8}
+  .evo2-export{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:.2rem 0 .6rem;font-size:.82rem;color:#475569}
+  .evo2-export button{font-size:.8rem;padding:.32rem .6rem;border:1px solid #CBD5E1;background:#fff;border-radius:6px;cursor:pointer;color:#1D4ED8}
+  .evo2-export button:hover{background:#F1F5F9}
+  </style>
+  <script>
+  const DIV=[[0,'#639922'],[0.25,'#97C459'],[0.5,'#C9CCD6'],[0.75,'#E24B4A'],[1,'#A32D2D']]; // signed Δ: + green tolerated, - red disfavoured
+  const qp=new URLSearchParams(location.search);
+  let gene=qp.get('gene'), chr=qp.get('chr'), start=qp.get('start'), end=qp.get('end'), model=qp.get('model')||'Evo2_40B_NoRC_Delta';
+  if(!gene && !(chr&&start&&end)){chr='19';start='43900000';end='45900000';}
+  const g=id=>document.getElementById(id);
+  if(gene)g('v-gene').value=gene; if(chr)g('v-chr').value=chr; if(start)g('v-start').value=start; if(end)g('v-end').value=end; g('v-model').value=model;
+  const status=g('v-status');
+
+  // tabs
+  document.querySelectorAll('.evo2-tab').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.evo2-tab').forEach(x=>x.classList.remove('is-active'));
+    b.classList.add('is-active');
+    document.querySelectorAll('.evo2-tabpane').forEach(p=>{p.style.display=(p.dataset.pane===b.dataset.tab)?'':'none';});
+    window.dispatchEvent(new Event('resize'));
+  }));
+
+  const baseLayout=(t,xt,yt,extra={})=>Object.assign({title:{text:t,font:{size:15,color:'#0F172A'}},margin:{t:46,r:18,b:64,l:64},
+    font:{family:'ui-sans-serif,system-ui,Arial',color:'#1E293B'},paper_bgcolor:'#fff',plot_bgcolor:'#fff',
+    xaxis:{title:xt,gridcolor:'#EEF2F7',zeroline:false},yaxis:{title:yt,gridcolor:'#EEF2F7',zeroline:false}},extra);
+  const fmtp=p=>p==null?'—':(p<1e-4?p.toExponential(1):p.toFixed(4));
+  const star=p=>p==null?'':(p<1e-3?'***':p<1e-2?'**':p<0.05?'*':'n.s.');
+  function dlPNG(divId,name){Plotly.downloadImage(g(divId),{format:'png',filename:name,width:1100,height:700,scale:2});}
+  function dlBlob(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();}
+  function dlCSV(name,rows){dlBlob(name,rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');}
+  document.querySelectorAll('#v-export [data-png]').forEach(b=>b.addEventListener('click',()=>dlPNG(b.dataset.png,'evo2_'+b.dataset.png)));
+  g('v-dljson').addEventListener('click',()=>{if(window._D)dlBlob('evo2_region_analysis.json',JSON.stringify(window._D,null,2),'application/json');});
+  g('v-dlcsv').addEventListener('click',()=>{const d=window._D;if(!d)return;
+    const rows=[['panel','group','n','mean_absDelta','sem','vs_selected_test','vs_selected_stat','vs_selected_p','vs_selected_padj','vs_genomewide_test','vs_genomewide_stat','vs_genomewide_p','vs_genomewide_padj']];
+    const add=(pn,arr)=>arr.forEach(x=>rows.push([pn,x.name,x.box.n,x.box.mean,x.box.sem,x.test_vs_selected.test,x.test_vs_selected.stat,x.test_vs_selected.p,x.test_vs_selected.p_adj,x.test_vs_genomewide.test,x.test_vs_genomewide.stat,x.test_vs_genomewide.p,x.test_vs_genomewide.p_adj]));
+    add('A_region',d.panelA);add('B_consequence',d.panelB);dlCSV('evo2_region_stats.csv',rows);});
+
+  function boxPanel(divId,tblId,panel,selMean,gwMean,title){
+    if(!panel.length){g(divId).innerHTML='<p class="evo2-help">No groups with enough variants in this query.</p>';g(tblId).innerHTML='';return;}
+    const names=panel.map(x=>x.name);
+    // mean ± SEM only (no quantile box) per v1.3 spec
+    const mean={type:'scatter',x:names,y:panel.map(x=>x.box.mean),mode:'markers',
+      error_y:{type:'data',array:panel.map(x=>x.box.sem),color:'#0F172A',thickness:1.5,width:7},
+      marker:{color:'#2563EB',size:9,symbol:'circle',line:{color:'#1D4ED8',width:1}},name:'mean ± SEM'};
+    const selLine={type:'scatter',x:names,y:names.map(_=>selMean),mode:'lines',line:{color:'#1D4ED8',dash:'dash',width:1.5},name:'selected-set mean'};
+    const gwLine={type:'scatter',x:names,y:names.map(_=>gwMean),mode:'lines',line:{color:'#C0392B',dash:'dot',width:1.5},name:'genome-wide mean'};
+    Plotly.newPlot(divId,[mean,selLine,gwLine],baseLayout(title,'','|Evo2 Δ| (mean ± SEM)',{showlegend:true,legend:{orientation:'h',y:-0.34,x:0.5,xanchor:'center',font:{size:10}},margin:{t:42,r:18,b:108,l:64},xaxis:{tickangle:-25,automargin:true}}),{responsive:true,displayModeBar:false});
+    // stats table
+    let h='<table><thead><tr><th>group</th><th>n</th><th>mean ± SEM</th><th>vs selected (test, p, p<sub>adj</sub>)</th><th>vs genome-wide (test, p, p<sub>adj</sub>)</th></tr></thead><tbody>';
+    panel.forEach(x=>{
+      const s=x.test_vs_selected, w=x.test_vs_genomewide;
+      const cell=t=>`${t.test}${t.stat!=null?'='+t.stat.toFixed(2):''}, ${fmtp(t.p)}, ${fmtp(t.p_adj)} <span class="${(t.p_adj!=null&&t.p_adj<0.05)?'evo2-sig':'evo2-nsig'}">${star(t.p_adj)}</span>`;
+      h+=`<tr><td>${x.name}</td><td>${x.box.n.toLocaleString()}</td><td>${x.box.mean.toFixed(2)} ± ${x.box.sem.toFixed(2)}</td><td>${cell(s)}</td><td>${cell(w)}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    g(tblId).innerHTML=h;
+  }
+
+  function heatmap(divId,panel){
+    const L=panel.labels, M=panel.matrix;
+    const ann=[];
+    for(let i=0;i<L.length;i++)for(let j=0;j<L.length;j++){const v=M[i][j];if(v!=null)ann.push({x:L[j],y:L[i],text:v.toFixed(2),showarrow:false,font:{size:10.5,color:'#0F172A'},bgcolor:'rgba(255,255,255,0.80)',borderpad:1});}
+    Plotly.newPlot(divId,[{type:'heatmap',x:L,y:L,z:M,colorscale:'Blues',zmin:0.2,zmax:1,colorbar:{title:'Spearman ρ',thickness:12}}],
+      Object.assign(baseLayout('Model concordance within the query (Spearman ρ)','',''),{annotations:ann,yaxis:{autorange:'reversed'},xaxis:{tickangle:-35,automargin:true}}),{responsive:true,displayModeBar:false});
+  }
+
+  function landscape(divId,panel,label){
+    const txt=panel.rsid.map((r,i)=>`${r||''}<br>${panel.func[i]||''} · Δ=${panel.signed[i].toFixed(1)}`);
+    // highlight & label the most extreme |Δ| variants
+    const order=panel.y.map((v,i)=>[v,i]).sort((a,b)=>b[0]-a[0]).slice(0,6).map(p=>p[1]);
+    const hl={x:order.map(i=>panel.x[i]),y:order.map(i=>panel.y[i]),text:order.map(i=>panel.rsid[i]||''),
+      mode:'markers+text',type:'scatter',textposition:'top center',textfont:{size:9,color:'#0F172A'},
+      marker:{size:12,color:'rgba(0,0,0,0)',line:{width:1.6,color:'#0F172A'}},hoverinfo:'skip',showlegend:false};
+    Plotly.newPlot(divId,[{x:panel.x,y:panel.y,text:txt,hoverinfo:'text',mode:'markers',type:'scattergl',
+      marker:{size:7,color:panel.signed,colorscale:DIV,cmid:0,line:{width:0.3,color:'#334155'},colorbar:{title:'Δ',thickness:12}}},hl],
+      baseLayout('Locus landscape — '+label+(panel.downsampled?' (downsampled)':''),'position (Mb)','|Evo2 Δ|  (log)',{yaxis:{type:'log',title:'|Evo2 Δ| (log)',gridcolor:'#EEF2F7'},showlegend:false}),{responsive:true,displayModeBar:false});
+  }
+
+  async function run(){
+    const u=new URLSearchParams();
+    if(gene)u.set('gene',gene); else {u.set('chr',chr);u.set('start',start);u.set('end',end);}
+    u.set('model',model);
+    const label=gene?('gene '+gene):('chr'+chr+':'+(+start).toLocaleString()+'–'+(+end).toLocaleString());
+    status.textContent='Analyzing '+label+' …';
+    let d;
+    try{ d=await (await fetch('/api/region/analyze?'+u.toString())).json(); }
+    catch(e){ status.textContent='Could not load analysis.'; return; }
+    if(d.error){ status.textContent=d.error; g('v-tabs').style.display='none'; return; }
+    g('v-tabs').style.display='flex';
+    status.textContent=`${d.query.n.toLocaleString()} variant(s) · model ${d.query.model_label} · selected-set mean |Δ| ${d.selected_mean_abs.toFixed(2)} vs genome-wide ${d.genomewide_mean_abs.toFixed(2)}${d.query.truncated?' · (capped)':''}`;
+    boxPanel('panelA','statsA',d.panelA,d.selected_mean_abs,d.genomewide_mean_abs,'Panel A — |Δ| by genomic region');
+    boxPanel('panelB','statsB',d.panelB,d.selected_mean_abs,d.genomewide_mean_abs,'Panel B — |Δ| by coding consequence');
+    heatmap('panelC',d.panelC);
+    landscape('panelD',d.panelD,d.query.label);
+    const tbl=gene?('/evo2/gene_top_impact?gene='+encodeURIComponent(gene)):('/evo2/lookup_by_region?chr='+chr+'&start='+start+'&end='+end);
+    g('v-links').innerHTML=`Dataset ${d.dataset_version||''} · see the <a href="${tbl}">full variant table</a> · <a href="/api/region/analyze?${u.toString()}">analysis JSON</a>`;
+    window._D=d; g('v-export').style.display='flex';
+  }
+  g('v-model').addEventListener('change',()=>{ const u=new URLSearchParams(location.search); u.set('model',g('v-model').value); if(!u.get('gene')&&!u.get('chr')){u.set('chr','19');u.set('start','43900000');u.set('end','45900000');} location.search=u.toString(); });
+  run();
+  </script>
+  {% endraw %}
+</div>
+{% endblock %}

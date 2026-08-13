@@ -1,0 +1,28 @@
+# data (multi-GB, distributed separately)
+data/
+*.db
+*.db-journal
+*.parquet
+*.tsv.gz
+*.txt.gz
+
+# generated figure output
+figures/output/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# os / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

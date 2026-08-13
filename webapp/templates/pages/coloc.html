@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Evo2 × GWAS co-localization — Evo2 Variant Effect Database{% endblock %}
+{% block body_class %}evo2-doc-body{% endblock %}
+{% block extra_head %}<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>{% endblock %}
+
+{% block content %}
+<div class="evo2-wrap">
+  <div class="evo2-masthead">
+    <div class="evo2-brand">
+      <span class="evo2-logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 3c0 6 14 12 14 18M19 3c0 6-14 12-14 18"/><path d="M6.5 6h11M6 10h12M6 14h12M6.5 18h11"/></svg></span>
+      <span class="evo2-wordmark">Evo2 Variant Effect Database</span>
+      <nav class="evo2-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/viewer">Regional analysis</a>
+        <a href="/regionset">Region sets</a>
+        <a href="/gwas">GWAS</a>
+        <a href="/about">About</a>
+      </nav>
+    </div>
+    <div class="evo2-tagrow"><p class="evo2-tagline">Evo2 × GWAS co-localization — in a genomic region, line up the <strong>Evo2 Δ</strong> track, the <strong>GWAS −log10(P)</strong> track(s) and the <strong>variant-annotation</strong> track to see whether model-disruptive variants coincide with association signal. Add one or more traits/cohorts to compare.</p></div>
+  </div>
+
+  <form class="evo2-viewer-form" onsubmit="return false">
+    <div class="vf-field"><label for="c-gene">Gene</label><input id="c-gene" placeholder="FGF5" autocomplete="off"></div>
+    <span class="evo2-or">or</span>
+    <div class="vf-field vf-chr"><label for="c-chr">Chr</label><input id="c-chr" placeholder="4" inputmode="numeric"></div>
+    <div class="vf-field"><label for="c-start">Start</label><input id="c-start" placeholder="80205413" inputmode="numeric"></div>
+    <div class="vf-field"><label for="c-end">End</label><input id="c-end" placeholder="80333456" inputmode="numeric"></div>
+    <div class="vf-field"><label for="c-model">Evo2 model</label>
+      <select id="c-model">
+        <option value="Evo2_40B_NoRC_Delta">40B · noRC</option><option value="Evo2_40B_AvgRC_Delta">40B · avgRC</option>
+        <option value="Evo2_40B_WeightedRC_Delta">40B · wtRC</option><option value="Evo2_7B_NoRC_Delta">7B · noRC</option>
+        <option value="Evo2_7B_AvgRC_Delta">7B · avgRC</option><option value="Evo2_7B_WeightedRC_Delta">7B · wtRC</option>
+      </select>
+    </div>
+    <button type="button" id="c-go">Plot region</button>
+  </form>
+
+  <div class="c-traitbar">
+    <select id="c-cohort"><option value="">All cohorts</option><option>UKB</option><option>FinnGen</option><option>MVP</option></select>
+    <input id="c-q" placeholder="search a trait (name / category) …" autocomplete="off" style="flex:1;min-width:160px">
+    <select id="c-results" style="flex:1.4;min-width:200px"></select>
+    <button type="button" id="c-add">+ add trait</button>
+  </div>
+  <div id="c-chips" class="c-chips"></div>
+  <p id="c-status" class="evo2-help"></p>
+
+  <div id="coloc" class="evo2-chart" style="height:720px;"></div>
+  <div id="c-export" class="evo2-export" style="display:none">Export&nbsp;&#9656;
+    <button type="button" id="c-png">tracks PNG</button>
+    <button type="button" id="c-csv">region CSV</button>
+    <button type="button" id="c-json">region JSON</button>
+  </div>
+  <p class="evo2-help">Tracks share the genomic x-axis (drag to zoom all three together). GWAS track shows variants with <strong>P ≤ 1e-4</strong> (the stored signal); the dashed line marks genome-wide significance (P = 5×10⁻⁸). Higher-P variants are not stored.</p>
+
+  {% raw %}
+  <style>
+  .c-traitbar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.3rem 0}
+  .c-traitbar select,.c-traitbar input{padding:.45rem .5rem;border:1px solid #CBD5E1;border-radius:7px;font-size:.9rem}
+  .c-traitbar button,#c-go{cursor:pointer}
+  .c-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:.3rem 0}
+  .c-chip{display:inline-flex;align-items:center;gap:.4rem;background:#EEF2FF;border:1px solid #C7D2FE;color:#3730A3;border-radius:14px;padding:.2rem .6rem;font-size:.82rem}
+  .c-chip button{border:none;background:none;color:#6366F1;cursor:pointer;font-size:1rem;line-height:1;padding:0}
+  .evo2-export{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:.3rem 0;font-size:.82rem;color:#475569}
+  .evo2-export button{font-size:.8rem;padding:.32rem .6rem;border:1px solid #CBD5E1;background:#fff;border-radius:6px;cursor:pointer;color:#1D4ED8}
+  </style>
+  <script>
+  const g=id=>document.getElementById(id), status=g('c-status');
+  const DIV=[[0,'#639922'],[0.25,'#97C459'],[0.5,'#C9CCD6'],[0.75,'#E24B4A'],[1,'#A32D2D']];
+  const PAL=['#C0392B','#2563EB','#15803D','#B45309','#7C3AED','#0E7490','#BE185D','#0F172A'];
+  let selected=[]; // {study_id,label}
+
+  function renderChips(){
+    g('c-chips').innerHTML=selected.map((s,i)=>`<span class="c-chip">${s.label}<button data-i="${i}">×</button></span>`).join('')
+      || '<span class="evo2-help">No traits added — search and “+ add trait” to draw the GWAS track.</span>';
+    g('c-chips').querySelectorAll('button[data-i]').forEach(b=>b.addEventListener('click',()=>{selected.splice(+b.dataset.i,1);renderChips();}));
+  }
+  async function search(){
+    const q=g('c-q').value.trim(), co=g('c-cohort').value;
+    const d=await (await fetch(`/api/coloc/traits?q=${encodeURIComponent(q)}&cohort=${co}`)).json();
+    g('c-results').innerHTML=d.results.map(r=>`<option value="${r.study_id}">${r.cohort}: ${r.name} ${r.category?'· '+r.category:''}${r.n?' (n='+r.n.toLocaleString()+')':''}</option>`).join('');
+  }
+  g('c-add').addEventListener('click',()=>{
+    const o=g('c-results').selectedOptions[0]; if(!o)return;
+    const id=+o.value; if(selected.some(s=>s.study_id===id))return;
+    if(selected.length>=8){status.textContent='Up to 8 traits at once.';return;}
+    selected.push({study_id:id,label:o.textContent.slice(0,42)}); renderChips(); plot();
+  });
+
+  function plot(){
+    const gene=g('c-gene').value.trim();
+    const u=new URLSearchParams(); u.set('model',g('c-model').value);
+    if(selected.length) u.set('studies',selected.map(s=>s.study_id).join(','));
+    if(gene) u.set('gene',gene);
+    else { if(!g('c-chr').value||!g('c-start').value||!g('c-end').value){status.textContent='Enter a gene, or chr + start + end.';return;}
+      u.set('chr',g('c-chr').value); u.set('start',g('c-start').value); u.set('end',g('c-end').value); }
+    status.textContent='Loading region …';
+    fetch('/api/coloc/region?'+u.toString()).then(r=>r.json()).then(d=>{
+      if(d.error){status.textContent=d.error;return;}
+      window._C=d; draw(d);
+    }).catch(()=>status.textContent='Could not load region.');
+  }
+
+  function draw(d){
+    const v=d.variants;
+    const evo={x:v.map(x=>x.pos),y:v.map(x=>x.evo2),mode:'markers',type:'scattergl',name:'Evo2 Δ',yaxis:'y',
+      customdata:v.map(x=>[x.rsid||'',x.func||'']),
+      marker:{size:5,color:v.map(x=>x.evo2),colorscale:DIV,cmid:0,line:{width:0.2,color:'#334155'},colorbar:{title:'Δ',thickness:9,len:0.28,y:0.86}},
+      hovertemplate:'%{customdata[0]}<br>%{customdata[1]} · pos %{x:,}<br>Evo2 Δ=%{y:.1f}<extra></extra>'};
+    const gtr=d.traits.map((t,i)=>({x:t.points.map(p=>p.pos),y:t.points.map(p=>p.nlp),mode:'markers',type:'scattergl',
+      name:`${t.cohort}: ${(t.name||'').slice(0,26)}`,yaxis:'y2',marker:{size:6,color:PAL[i%8]},
+      text:t.points.map(p=>`${p.rsid}<br>${t.name}<br>P=${p.p.toExponential(1)}`),hoverinfo:'text'}));
+    const gwsig={x:[d.query.start,d.query.end],y:[7.301,7.301],mode:'lines',yaxis:'y2',line:{color:'#94A3B8',dash:'dash',width:1},hoverinfo:'skip',showlegend:false};
+    const anno={x:v.map(x=>x.pos),y:v.map(x=>x.func||'NA'),mode:'markers',type:'scattergl',yaxis:'y3',name:'annotation',showlegend:false,
+      marker:{size:5,color:'#64748B',opacity:0.5},hovertemplate:'%{x:,}<br>%{y}<extra></extra>'};
+    const layout={height:740,margin:{t:42,r:18,b:84,l:70},paper_bgcolor:'#fff',plot_bgcolor:'#fff',
+      font:{family:'ui-sans-serif,system-ui,Arial',color:'#1E293B'},hovermode:'closest',
+      legend:{orientation:'h',y:-0.13,x:0.5,xanchor:'center',font:{size:10}},
+      title:{text:`Co-localization — ${d.query.label} · ${v.length} variants · model ${d.query.model_label}${d.query.truncated?' (capped)':''}`,font:{size:14,color:'#0F172A'}},
+      xaxis:{domain:[0,1],anchor:'y3',title:`chr${d.query.chr} position (bp)`,gridcolor:'#EEF2F7',zeroline:false},
+      yaxis:{domain:[0.70,1.0],title:'Evo2 Δ',gridcolor:'#EEF2F7',zeroline:true,zerolinecolor:'#CBD5E1'},
+      yaxis2:{domain:[0.34,0.64],title:'−log10(P)',gridcolor:'#EEF2F7',rangemode:'tozero'},
+      yaxis3:{domain:[0,0.26],title:'annotation',type:'category',gridcolor:'#EEF2F7',automargin:true}};
+    Plotly.newPlot('coloc',[evo,...gtr,gwsig,anno],layout,{responsive:true,displayModeBar:true,displaylogo:false});
+    const nsig=d.traits.reduce((a,t)=>a+t.points.length,0);
+    status.textContent=`${d.query.label}: ${v.length} variants · ${d.traits.length} trait(s) · ${nsig} GWAS point(s) with P≤1e-4 in view.`;
+    g('c-export').style.display='flex';
+  }
+
+  function dlBlob(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();}
+  function dlCSV(name,rows){dlBlob(name,rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');}
+  g('c-png').addEventListener('click',()=>Plotly.downloadImage(g('coloc'),{format:'png',filename:'evo2_coloc',width:1300,height:760,scale:2}));
+  g('c-json').addEventListener('click',()=>{if(window._C)dlBlob('evo2_coloc_region.json',JSON.stringify(window._C,null,2),'application/json');});
+  g('c-csv').addEventListener('click',()=>{const d=window._C;if(!d)return;
+    const tmaps=d.traits.map(t=>{const m={};t.points.forEach(p=>m[p.rsid]=p.nlp);return m;});
+    const hdr=['pos','rsid','ref','alt','evo2_delta',...d.traits.map(t=>'neglog10P['+(t.cohort+':'+(t.name||'')).slice(0,28)+']'),'annotation'];
+    const rows=[hdr];
+    d.variants.forEach(v=>rows.push([v.pos,v.rsid,v.ref,v.alt,v.evo2,...tmaps.map(m=>m[v.rsid]==null?'':m[v.rsid]),v.func]));
+    dlCSV('evo2_coloc_region.csv',rows);});
+  g('c-go').addEventListener('click',plot);
+  g('c-model').addEventListener('change',plot);
+  let deb; g('c-q').addEventListener('input',()=>{clearTimeout(deb);deb=setTimeout(search,250);});
+  g('c-cohort').addEventListener('change',search);
+
+  // default demo: FGF5 gene (a canonical blood-pressure locus) + UKB hypertensive
+  // diseases (GCST90473520), Evo2-40B avgRC.
+  g('c-gene').value='FGF5';
+  g('c-chr').value='4'; g('c-start').value='80205413'; g('c-end').value='80333456';
+  g('c-model').value='Evo2_40B_AvgRC_Delta';
+  g('c-cohort').value='UKB';
+  g('c-q').value='hypertensive diseases';
+  (async()=>{ await search();
+    const opts=g('c-results').options;
+    if(opts.length){ selected.push({study_id:+opts[0].value,label:opts[0].textContent.slice(0,42)}); }
+    renderChips(); plot();
+  })();
+  </script>
+  {% endraw %}
+</div>
+{% endblock %}

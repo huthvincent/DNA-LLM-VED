@@ -1,0 +1,42 @@
+{
+  "dataset_version": "2026-06-18-gnomad-v4.1-joint",
+  "default_config": "Evo2_40B_NoRC_Delta",
+  "configs": {
+    "Evo2_7B_NoRC_Delta": {
+      "label": "7B \u00b7 noRC",
+      "mean_abs": 9.63989117096225,
+      "sd_abs": 30.382480411315118,
+      "n": 6475578
+    },
+    "Evo2_7B_AvgRC_Delta": {
+      "label": "7B \u00b7 avgRC",
+      "mean_abs": 8.958294337149516,
+      "sd_abs": 30.021820864449307,
+      "n": 6475578
+    },
+    "Evo2_7B_WeightedRC_Delta": {
+      "label": "7B \u00b7 wtRC",
+      "mean_abs": 9.223682494503384,
+      "sd_abs": 30.64860478930624,
+      "n": 6475578
+    },
+    "Evo2_40B_NoRC_Delta": {
+      "label": "40B \u00b7 noRC",
+      "mean_abs": 24.401021261124075,
+      "sd_abs": 57.418124920348156,
+      "n": 6475578
+    },
+    "Evo2_40B_AvgRC_Delta": {
+      "label": "40B \u00b7 avgRC",
+      "mean_abs": 20.85317369828138,
+      "sd_abs": 43.46828991288287,
+      "n": 6475578
+    },
+    "Evo2_40B_WeightedRC_Delta": {
+      "label": "40B \u00b7 wtRC",
+      "mean_abs": 21.543147070837012,
+      "sd_abs": 47.86268101989327,
+      "n": 6475578
+    }
+  }
+}

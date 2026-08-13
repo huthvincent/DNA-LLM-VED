@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}GWAS / Heritability — Evo2 Variant Effect Database{% endblock %}
+{% block body_class %}evo2-doc-body{% endblock %}
+{% block extra_head %}<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>{% endblock %}
+
+{% block content %}
+<div class="evo2-wrap">
+  <div class="evo2-masthead">
+    <div class="evo2-brand">
+      <span class="evo2-logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 3c0 6 14 12 14 18M19 3c0 6-14 12-14 18"/><path d="M6.5 6h11M6 10h12M6 14h12M6.5 18h11"/></svg></span>
+      <span class="evo2-wordmark">Evo2 Variant Effect Database</span>
+      <nav class="evo2-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/viewer">Regional analysis</a>
+        <a href="/regionset">Region sets</a>
+        <a href="/coloc">Co-localization</a>
+        <a href="/about">About</a>
+      </nav>
+    </div>
+    <div class="evo2-tagrow"><p class="evo2-tagline">GWAS / Heritability — S-LDSC partitioned-heritability <strong>coefficient z-score</strong> for the Evo2 annotation, across UK Biobank, FinnGen and the Million Veteran Program. Databases are ranked independently and never mixed.</p></div>
+  </div>
+
+  <form class="evo2-viewer-form" onsubmit="return false">
+    <div class="vf-field"><label for="gw-src">GWAS database</label>
+      <select id="gw-src"><option value="UKB">UK Biobank (UKB)</option><option value="FinnGen">FinnGen</option><option value="MVP">Million Veteran Program (MVP)</option></select>
+    </div>
+    <div class="vf-field" style="flex:2"><label for="gw-q">Search trait (name / ID / category)</label><input id="gw-q" placeholder="e.g. hypertension, diabetes, Phe_250…" autocomplete="off"></div>
+    <div class="vf-field" style="flex:2"><label for="gw-trait">Trait</label><select id="gw-trait"></select></div>
+  </form>
+  <p id="gw-status" class="evo2-help"></p>
+
+  <div class="evo2-tabs">
+    <button class="evo2-tab is-active" data-tab="lookup">Trait z-score &amp; quantile</button>
+    <button class="evo2-tab" data-tab="overview">Category overview</button>
+  </div>
+
+  <section class="evo2-tabpane is-active" data-pane="lookup">
+    <div id="gw-summary" class="evo2-stats-tbl"></div>
+    <div class="evo2-chart-row">
+      <div id="gw_hist_all" class="evo2-chart" style="height:360px;flex:1"></div>
+      <div id="gw_hist_cat" class="evo2-chart" style="height:360px;flex:1"></div>
+    </div>
+    <p class="evo2-help">Histograms of the S-LDSC coefficient z-score across <em>all traits in the selected database</em> (left) and <em>within the selected trait's phenotype category</em> (right). The selected trait is marked with a vertical line; its rank and percentile are reported in the table above.</p>
+  </section>
+  <section class="evo2-tabpane" data-pane="overview" style="display:none">
+    <div id="gw_overview" class="evo2-chart" style="height:620px;"></div>
+    <p class="evo2-help">Coefficient z-score for every trait, grouped by phenotype category (Task 8). Categories are ordered by median z-score; the dashed line marks z = 0. Hover a point for the phenotype name, z, p and sample size.</p>
+  </section>
+
+  <div id="gw-export" class="evo2-export" style="display:none">Export&nbsp;&#9656;
+    <button type="button" id="gw-png-all">histogram (whole DB) PNG</button>
+    <button type="button" id="gw-png-cat">histogram (category) PNG</button>
+    <button type="button" id="gw-csv-trait">trait summary CSV</button>
+    <button type="button" id="gw-csv-rank">full ranking CSV</button>
+    <button type="button" id="gw-png-ov">category overview PNG</button>
+  </div>
+
+  {% raw %}
+  <style>
+  .evo2-tabs{display:flex;gap:.4rem;margin:.4rem 0 1rem;flex-wrap:wrap}
+  .evo2-tab{padding:.5rem .9rem;border:1px solid #E2E8F0;background:#fff;border-radius:8px;cursor:pointer;font-size:.92rem;color:#475569}
+  .evo2-tab.is-active{background:#2563EB;color:#fff;border-color:#2563EB}
+  .evo2-chart-row{display:flex;gap:1rem;flex-wrap:wrap}
+  .evo2-stats-tbl{overflow-x:auto;margin:.2rem 0 .8rem}
+  .evo2-stats-tbl table{border-collapse:collapse;font-size:.86rem;width:100%;max-width:900px}
+  .evo2-stats-tbl td,.evo2-stats-tbl th{border-bottom:1px solid #EEF2F7;padding:.34rem .6rem;text-align:left}
+  .evo2-stats-tbl th{color:#475569;font-weight:600;width:34%}
+  .gw-big{font-size:1.05rem;font-weight:700;color:#2563EB}
+  .evo2-export{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:.4rem 0;font-size:.82rem;color:#475569}
+  .evo2-export button{font-size:.8rem;padding:.32rem .6rem;border:1px solid #CBD5E1;background:#fff;border-radius:6px;cursor:pointer;color:#1D4ED8}
+  .evo2-export button:hover{background:#F1F5F9}
+  </style>
+  <script>
+  const g=id=>document.getElementById(id), status=g('gw-status');
+  const fmtp=p=>p==null?'—':(p<1e-4?p.toExponential(2):p.toFixed(4));
+  const L=(t,xt,yt,ex={})=>Object.assign({title:{text:t,font:{size:14,color:'#0F172A'}},margin:{t:42,r:16,b:54,l:56},
+    font:{family:'ui-sans-serif,system-ui,Arial',color:'#1E293B'},paper_bgcolor:'#fff',plot_bgcolor:'#fff',
+    xaxis:{title:xt,gridcolor:'#EEF2F7',zeroline:false},yaxis:{title:yt,gridcolor:'#EEF2F7',zeroline:false}},ex);
+  let SRC='UKB', traits=[];
+
+  document.querySelectorAll('.evo2-tab').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.evo2-tab').forEach(x=>x.classList.remove('is-active')); b.classList.add('is-active');
+    document.querySelectorAll('.evo2-tabpane').forEach(p=>p.style.display=(p.dataset.pane===b.dataset.tab)?'':'none');
+    if(b.dataset.tab==='overview') loadOverview();
+    window.dispatchEvent(new Event('resize'));
+  }));
+
+  function histWithLine(divId,zvals,zt,title,pct,rank,total){
+    const line={type:'line',x0:zt,x1:zt,yref:'paper',y0:0,y1:1,line:{color:'#C0392B',width:2}};
+    Plotly.newPlot(divId,[{type:'histogram',x:zvals,marker:{color:'#93B4E8',line:{color:'#2563EB',width:0.5}},nbinsx:40,hoverinfo:'x+y'}],
+      Object.assign(L(title,'S-LDSC coefficient z-score','number of traits'),
+        {shapes:[line],annotations:[{x:zt,yref:'paper',y:0.96,yanchor:'top',text:`selected z=${zt.toFixed(2)} · ${pct}th pct · rank ${rank}/${total}`,showarrow:false,font:{size:11,color:'#C0392B'},xanchor:zt>0?'right':'left',bgcolor:'rgba(255,255,255,0.7)'}]}),
+      {responsive:true,displayModeBar:false});
+  }
+
+  async function loadTrait(id){
+    if(!id) return;
+    status.textContent='Loading trait …';
+    const d=await (await fetch(`/api/gwas/trait?source=${SRC}&id=${encodeURIComponent(id)}`)).json();
+    if(d.error){status.textContent=d.error;return;}
+    const t=d.trait;
+    status.textContent=`${SRC}: ${t.name}`;
+    histWithLine('gw_hist_all',d.overall.z,t.z,`Distribution across all ${d.overall.total} ${SRC} traits`,d.overall.percentile,d.overall.rank,d.overall.total);
+    histWithLine('gw_hist_cat',d.category.z,t.z,`Within category “${d.category.name}” (${d.category.total} traits)`,d.category.percentile,d.category.rank,d.category.total);
+    g('gw-summary').innerHTML=`<table>
+      <tr><th>Trait</th><td class="gw-big">${t.name}</td></tr>
+      <tr><th>Database · ID</th><td>${SRC} · ${t.id}</td></tr>
+      <tr><th>Phenotype category</th><td>${d.category.name}</td></tr>
+      <tr><th>S-LDSC coefficient z-score</th><td class="gw-big">${t.z.toFixed(3)}</td></tr>
+      <tr><th>Coefficient ± SE</th><td>${t.coef==null?'—':t.coef.toExponential(2)} ± ${t.coef_se==null?'—':t.coef_se.toExponential(2)}</td></tr>
+      <tr><th>p-value (one-sided, coef&gt;0)</th><td>${fmtp(t.p)}</td></tr>
+      <tr><th>Sample size</th><td>${t.n==null?'—':t.n.toLocaleString()}</td></tr>
+      <tr><th>Rank in database</th><td><b>${d.overall.rank}</b> of ${d.overall.total} &nbsp;·&nbsp; ${d.overall.percentile}th percentile</td></tr>
+      <tr><th>Rank within category</th><td><b>${d.category.rank}</b> of ${d.category.total} &nbsp;·&nbsp; ${d.category.percentile}th percentile</td></tr>
+    </table>`;
+    window._T=d; g('gw-export').style.display='flex';
+  }
+
+  async function loadSearch(){
+    const q=g('gw-q').value.trim();
+    const d=await (await fetch(`/api/gwas/search?source=${SRC}&q=${encodeURIComponent(q)}`)).json();
+    traits=d.results;
+    g('gw-trait').innerHTML=traits.map(r=>`<option value="${r.id}">${r.name} — ${r.category} (z=${r.z.toFixed(2)})</option>`).join('');
+    if(traits.length) loadTrait(traits[0].id);
+    else { status.textContent='No traits match.'; }
+  }
+
+  async function loadOverview(){
+    const d=await (await fetch(`/api/gwas/overview?source=${SRC}`)).json();
+    const cats=d.categories;
+    const xs=[],ys=[],cols=[],cd=[];
+    cats.forEach(c=>c.traits.forEach(t=>{xs.push(t.z);ys.push(c.category);cols.push(t.z>=0?'#2563EB':'#C0392B');cd.push([t.name,c.category,t.p==null?'NA':t.p.toExponential(1),t.n==null?'NA':t.n.toLocaleString()]);}));
+    window._OV=d;
+    Plotly.newPlot('gw_overview',[{type:'scatter',mode:'markers',x:xs,y:ys,marker:{color:cols,size:5,opacity:0.5},customdata:cd,
+      hovertemplate:'%{customdata[0]}<br>%{customdata[1]} · z=%{x:.2f} · p=%{customdata[2]} · n=%{customdata[3]}<extra></extra>'}],
+      Object.assign(L(`${SRC} — coefficient z-score by phenotype category (${d.n} traits)`,'S-LDSC coefficient z-score',''),
+        {shapes:[{type:'line',x0:0,x1:0,yref:'paper',y0:0,y1:1,line:{color:'#94A3B8',dash:'dash',width:1}}],
+         yaxis:{automargin:true,categoryorder:'array',categoryarray:cats.map(c=>c.category).reverse()},margin:{l:170,t:42,r:16,b:54}}),
+      {responsive:true,displayModeBar:false});
+  }
+
+  function dlPNG(divId,name){Plotly.downloadImage(g(divId),{format:'png',filename:name,width:1000,height:640,scale:2});}
+  function dlBlob(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();}
+  function dlCSV(name,rows){dlBlob(name,rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');}
+  g('gw-png-all').addEventListener('click',()=>dlPNG('gw_hist_all','evo2_gwas_hist_all'));
+  g('gw-png-cat').addEventListener('click',()=>dlPNG('gw_hist_cat','evo2_gwas_hist_category'));
+  g('gw-png-ov').addEventListener('click',()=>dlPNG('gw_overview','evo2_gwas_overview'));
+  g('gw-csv-trait').addEventListener('click',()=>{const d=window._T;if(!d)return;const t=d.trait;
+    dlCSV('evo2_gwas_trait.csv',[['database','id','name','category','z','coef','coef_se','p','n','rank_db','total_db','percentile_db','rank_cat','total_cat','percentile_cat'],
+      [d.source,t.id,t.name,d.category.name,t.z,t.coef,t.coef_se,t.p,t.n,d.overall.rank,d.overall.total,d.overall.percentile,d.category.rank,d.category.total,d.category.percentile]]);});
+  g('gw-csv-rank').addEventListener('click',async()=>{const r=await (await fetch(`/api/gwas/search?source=${SRC}&all=1`)).json();
+    const rows=[['rank','id','name','category','z','p','n']];r.results.forEach(x=>rows.push([x.rank,x.id,x.name,x.category,x.z,x.p,x.n]));dlCSV(`evo2_gwas_${SRC}_ranking.csv`,rows);});
+  g('gw-src').addEventListener('change',()=>{SRC=g('gw-src').value; loadSearch(); if(document.querySelector('.evo2-tab.is-active').dataset.tab==='overview') loadOverview();});
+  let deb; g('gw-q').addEventListener('input',()=>{clearTimeout(deb); deb=setTimeout(loadSearch,250);});
+  g('gw-trait').addEventListener('change',()=>loadTrait(g('gw-trait').value));
+  loadSearch();
+  </script>
+  {% endraw %}
+</div>
+{% endblock %}

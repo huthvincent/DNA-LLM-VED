@@ -1,0 +1,13 @@
+# database build + statistics
+numpy>=1.24
+scipy>=1.10
+pandas>=2.0
+
+# web application
+datasette==0.65.2
+
+# annotation fixes / supplementary handling
+openpyxl>=3.1
+
+# figure scripts
+matplotlib>=3.7

@@ -1,0 +1,143 @@
+:root{
+  --c-ink:#0F172A; --c-ink-soft:#1E293B; --c-accent:#2563EB; --c-accent-hover:#1D4ED8;
+  --c-bg:#F8FAFC; --c-surface:#FFFFFF; --c-border:#E2E8F0; --c-border-strong:#CBD5E1;
+  --c-text:#1E293B; --c-muted:#475569; --c-code-bg:#EEF2F8;
+  --c-amber-bg:#FEF3E2; --c-amber-ink:#92400E; --c-amber-border:#FCD9A8;
+  --c-sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --c-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+}
+body.evo2-home,body.evo2-doc-body{background:var(--c-bg);color:var(--c-text);font-family:var(--c-sans);}
+.evo2-wrap{max-width:1000px;margin:0 auto;padding:1.5rem 1.25rem 3rem;}
+.evo2-wrap *{box-sizing:border-box;}
+
+/* hide Datasette's default dark nav bar on the branded landing & about pages */
+body.evo2-home header, body.evo2-doc-body header{display:none !important;}
+.evo2-masthead{background:transparent;padding:.5rem 0 .9rem;border-bottom:1px solid var(--c-border);margin-bottom:1.6rem;}
+.evo2-brand{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;}
+.evo2-logo{color:var(--c-accent);display:inline-flex;}
+.evo2-wordmark{font-weight:700;font-size:1.18rem;color:var(--c-ink);letter-spacing:-.01em;}
+.evo2-nav{margin-left:auto;display:flex;gap:1.2rem;align-items:center;}
+.evo2-nav a{font-size:.85rem;font-weight:600;color:var(--c-accent);text-decoration:none;white-space:nowrap;}
+.evo2-nav a:hover{text-decoration:underline;}
+.evo2-tagrow{display:flex;align-items:baseline;justify-content:space-between;gap:1.2rem;margin-top:.7rem;flex-wrap:wrap;}
+.evo2-tagline{margin:0;color:var(--c-muted);font-size:1rem;line-height:1.5;max-width:72ch;}
+.evo2-release{flex:none;font-family:var(--c-mono);font-size:.72rem;color:var(--c-muted);border:1px solid var(--c-border);border-radius:6px;padding:.22rem .55rem;background:var(--c-surface);white-space:nowrap;}
+
+.evo2-hero{margin:0 0 1.75rem;}
+.evo2-hero h1{font-size:clamp(1.75rem,4vw,2.4rem);line-height:1.14;font-weight:700;color:var(--c-ink);margin:0 0 .55rem;letter-spacing:-.02em;}
+.evo2-sub{font-size:1.05rem;line-height:1.6;color:var(--c-text);margin:0;max-width:64ch;}
+
+.evo2-search{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:1rem;margin:0 0 2.25rem;}
+.evo2-card{background:var(--c-surface);border:1px solid var(--c-border);border-radius:12px;padding:1.1rem 1.2rem;display:flex;flex-direction:column;transition:box-shadow .15s ease,border-color .15s ease;}
+.evo2-card:hover,.evo2-card:focus-within{box-shadow:0 1px 3px rgba(15,23,42,.07);border-color:var(--c-border-strong);}
+.evo2-card-title{font-size:.96rem;font-weight:700;color:var(--c-ink);margin-bottom:.6rem;}
+.evo2-card label{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--c-muted);display:block;margin-bottom:.3rem;min-height:2.3em;line-height:1.2;}
+.evo2-card input{width:100%;min-height:42px;font-family:var(--c-mono);font-size:.95rem;color:var(--c-ink);background:#fff;border:1px solid var(--c-border-strong);border-radius:8px;padding:.45rem .6rem;}
+.evo2-card input::placeholder{color:#94A3B8;}
+.evo2-region{display:flex;flex-wrap:wrap;gap:.5rem;}
+.evo2-region>div{min-width:0;}
+.evo2-region label{min-height:0;}
+.evo2-region>div:first-child{flex:0 0 4rem;}
+.evo2-region>div:nth-child(2){flex:1 1 8rem;}
+.evo2-region>div:nth-child(3){flex:1 1 100%;}
+.evo2-region input{padding:.45rem .5rem;}
+.evo2-help{font-size:.82rem;color:var(--c-muted);margin:.45rem 0 .8rem;flex:1 0 auto;}
+.evo2-card button{margin-top:auto;align-self:flex-start;min-height:40px;background:var(--c-accent);color:#fff;border:1px solid var(--c-accent);border-radius:8px;font-size:.9rem;font-weight:600;padding:.5rem 1.1rem;cursor:pointer;transition:background .15s ease;}
+.evo2-card button:hover{background:var(--c-accent-hover);border-color:var(--c-accent-hover);}
+.evo2-card button:active{transform:translateY(1px);}
+
+.evo2-section{background:var(--c-surface);border:1px solid var(--c-border);border-radius:12px;padding:1.3rem 1.45rem;margin:0 0 2rem;}
+.evo2-section h2{margin:0 0 .8rem;font-size:1.18rem;font-weight:700;color:var(--c-ink);letter-spacing:-.01em;}
+.evo2-section p{margin:.4rem 0;font-size:.96rem;line-height:1.62;color:var(--c-text);}
+code,.evo2-mono{font-family:var(--c-mono);font-size:.85rem;background:var(--c-code-bg);color:var(--c-ink);padding:.1rem .35rem;border-radius:4px;}
+
+.evo2-note-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:1.5rem;align-items:center;}
+.evo2-legend{margin:0;}
+.evo2-legend-bar{display:flex;height:16px;border-radius:5px;overflow:hidden;border:1px solid var(--c-border);}
+.evo2-legend-bar span{flex:1;}
+.evo2-legend-labels{display:flex;justify-content:space-between;margin-top:.5rem;font-size:.72rem;line-height:1.25;color:var(--c-muted);}
+.evo2-legend-labels span:first-child{text-align:left;}
+.evo2-legend-labels span:last-child{text-align:right;}
+
+.evo2-matrix{width:100%;border-collapse:collapse;margin:.4rem 0 1rem;font-size:.85rem;}
+.evo2-matrix th,.evo2-matrix td{border:1px solid var(--c-border);padding:.5rem .65rem;text-align:left;}
+.evo2-matrix thead th{background:#F1F5F9;color:var(--c-ink);font-weight:700;}
+.evo2-matrix tbody th{background:#F8FAFC;color:var(--c-ink);font-weight:600;font-family:var(--c-mono);font-size:.8rem;}
+.evo2-matrix td{font-family:var(--c-mono);font-size:.78rem;color:var(--c-accent);}
+.evo2-defs{list-style:none;padding:0;margin:.6rem 0 0;}
+.evo2-defs li{font-size:.92rem;line-height:1.55;color:var(--c-text);padding:.32rem 0;border-bottom:1px solid var(--c-border);}
+.evo2-defs li:last-child{border-bottom:0;}
+.evo2-defs strong{color:var(--c-ink);}
+
+.evo2-examples{margin:0 0 2rem;}
+.evo2-examples h2,.evo2-browse h2,.evo2-access h2{font-size:1.18rem;font-weight:700;color:var(--c-ink);margin:0 0 .85rem;letter-spacing:-.01em;}
+.evo2-ex-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:.85rem;}
+.evo2-ex{display:flex;flex-direction:column;gap:.3rem;background:var(--c-surface);border:1px solid var(--c-border);border-radius:10px;padding:.9rem 1rem;text-decoration:none;transition:box-shadow .15s ease,border-color .15s ease;}
+.evo2-ex:hover{box-shadow:0 1px 3px rgba(15,23,42,.07);border-color:var(--c-border-strong);}
+.evo2-ex-title{font-family:var(--c-mono);font-size:.95rem;font-weight:600;color:var(--c-accent);}
+.evo2-ex-desc{font-size:.85rem;color:var(--c-text);line-height:1.4;}
+.evo2-ex-url{font-family:var(--c-mono);font-size:.72rem;color:var(--c-muted);}
+
+.evo2-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.85rem;margin:0 0 .5rem;}
+.evo2-stat{background:var(--c-surface);border:1px solid var(--c-border);border-radius:10px;padding:1rem;text-align:center;}
+.evo2-stat-n{display:block;font-size:1.5rem;font-weight:700;color:var(--c-ink);font-family:var(--c-mono);}
+.evo2-stat-l{display:block;font-size:.8rem;color:var(--c-muted);margin-top:.25rem;}
+.evo2-stats-sub{font-size:.82rem;color:var(--c-muted);text-align:center;margin:.4rem 0 2rem;}
+
+.evo2-browse{margin:0 0 2rem;}
+.evo2-pills{display:flex;flex-wrap:wrap;gap:.5rem;}
+.evo2-pills a{font-size:.85rem;color:var(--c-accent);background:var(--c-surface);border:1px solid var(--c-border);border-radius:999px;padding:.4rem .9rem;text-decoration:none;transition:background .15s ease,border-color .15s ease;}
+.evo2-pills a:hover{background:#EEF2F8;border-color:var(--c-border-strong);}
+.evo2-pill-strong{font-weight:600;color:#fff !important;background:var(--c-accent) !important;border-color:var(--c-accent) !important;}
+.evo2-pill-strong:hover{background:var(--c-accent-hover) !important;}
+
+.evo2-access{margin:0 0 2rem;}
+.evo2-access-list{list-style:none;padding:0;margin:0;}
+.evo2-access-list li{font-size:.95rem;line-height:1.7;color:var(--c-text);border-bottom:1px solid var(--c-border);padding:.55rem 0;}
+.evo2-access-list li:last-child{border-bottom:0;}
+.evo2-access-list a{color:var(--c-accent);font-weight:600;text-decoration:none;}
+.evo2-access-list a:hover{text-decoration:underline;}
+
+.evo2-foot{border-top:1px solid var(--c-border);padding-top:1.25rem;margin-top:1rem;background:transparent !important;color:var(--c-text);}
+.evo2-foot p,.evo2-foot-meta,.evo2-cite,.evo2-foot-links{color:var(--c-muted) !important;}
+.evo2-disclaimer{background:var(--c-amber-bg);color:var(--c-amber-ink);border:1px solid var(--c-amber-border);border-radius:8px;padding:.7rem .9rem;font-size:.9rem;line-height:1.5;margin:0 0 1rem;}
+.evo2-foot-meta,.evo2-cite{font-size:.85rem;color:var(--c-muted);line-height:1.6;margin:.5rem 0;}
+.evo2-foot a{color:var(--c-accent) !important;text-decoration:none;}
+.evo2-foot a:hover{text-decoration:underline;}
+.evo2-foot-links{font-size:.85rem;color:var(--c-muted);margin:.85rem 0 0;}
+
+/* /about feature-scheme page */
+.evo2-doc h1{font-size:1.7rem;color:var(--c-ink);font-weight:700;letter-spacing:-.02em;margin:0 0 .4rem;}
+.evo2-doc h2{font-size:1.2rem;color:var(--c-ink);font-weight:700;margin:2rem 0 .6rem;border-bottom:1px solid var(--c-border);padding-bottom:.35rem;}
+.evo2-doc h3{font-size:1rem;color:var(--c-ink);font-weight:600;margin:1.4rem 0 .4rem;}
+.evo2-doc p,.evo2-doc li{font-size:.96rem;line-height:1.65;color:var(--c-text);}
+.evo2-doc table{width:100%;border-collapse:collapse;margin:.6rem 0 1rem;font-size:.88rem;}
+.evo2-doc th,.evo2-doc td{border:1px solid var(--c-border);padding:.45rem .65rem;text-align:left;vertical-align:top;}
+.evo2-doc thead th{background:#F1F5F9;color:var(--c-ink);font-weight:700;}
+.evo2-doc td:first-child{font-family:var(--c-mono);font-size:.8rem;color:var(--c-accent);white-space:nowrap;}
+.evo2-doc a{color:var(--c-accent);text-decoration:none;}
+.evo2-doc a:hover{text-decoration:underline;}
+.evo2-back{display:inline-block;margin:0 0 1rem;font-size:.85rem;color:var(--c-accent);text-decoration:none;font-weight:600;}
+
+/* region viewer */
+.evo2-viewer-form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.7rem;background:var(--c-surface);border:1px solid var(--c-border);border-radius:12px;padding:1rem 1.2rem;margin:0 0 1.2rem;}
+.vf-field{display:flex;flex-direction:column;}
+.vf-field label{font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--c-muted);margin-bottom:.25rem;}
+.vf-field input{min-height:40px;font-family:var(--c-mono);font-size:.92rem;color:var(--c-ink);border:1px solid var(--c-border-strong);border-radius:8px;padding:.4rem .6rem;width:9rem;}
+.vf-chr input{width:4rem;}
+.evo2-or{color:var(--c-muted);font-size:.85rem;padding-bottom:.6rem;}
+.evo2-viewer-form button{min-height:40px;background:var(--c-accent);color:#fff;border:1px solid var(--c-accent);border-radius:8px;font-size:.9rem;font-weight:600;padding:.5rem 1.3rem;cursor:pointer;}
+.evo2-viewer-form button:hover{background:var(--c-accent-hover);}
+.evo2-viewer-form input:focus{outline:2px solid var(--c-accent);outline-offset:1px;border-color:var(--c-accent);}
+.evo2-chart{background:var(--c-surface);border:1px solid var(--c-border);border-radius:12px;padding:.5rem;margin-bottom:1.2rem;}
+.evo2-chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.2rem;}
+
+a:focus-visible,button:focus-visible,input:focus-visible,.evo2-ex:focus-visible,.evo2-pills a:focus-visible{outline:2px solid var(--c-accent);outline-offset:2px;}
+.evo2-card input:focus{outline:2px solid var(--c-accent);outline-offset:1px;border-color:var(--c-accent);}
+
+@media (max-width:600px){
+  .evo2-note-grid{grid-template-columns:1fr;}
+  .evo2-nav{margin-left:0;width:100%;}
+  .evo2-search{grid-template-columns:1fr;}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;}}

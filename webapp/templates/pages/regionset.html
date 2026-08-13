@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Region-Set Analysis — Evo2 Variant Effect Database{% endblock %}
+{% block body_class %}evo2-doc-body{% endblock %}
+{% block extra_head %}<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>{% endblock %}
+
+{% block content %}
+<div class="evo2-wrap">
+  <div class="evo2-masthead">
+    <div class="evo2-brand">
+      <span class="evo2-logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 3c0 6 14 12 14 18M19 3c0 6-14 12-14 18"/><path d="M6.5 6h11M6 10h12M6 14h12M6.5 18h11"/></svg></span>
+      <span class="evo2-wordmark">Evo2 Variant Effect Database</span>
+      <nav class="evo2-nav" aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/viewer">Regional analysis</a>
+        <a href="/gwas">GWAS</a>
+        <a href="/coloc">Co-localization</a>
+        <a href="/about">About</a>
+        <a href="/evo2">Run SQL</a>
+      </nav>
+    </div>
+    <div class="evo2-tagrow"><p class="evo2-tagline">Region-Set Analysis — conservation, allele age, allele-frequency and functional stratification for a set of regions (a built-in set, or your own BED file).</p></div>
+  </div>
+
+  <form class="evo2-viewer-form" id="rs-form" onsubmit="return false">
+    <div class="vf-field"><label for="rs-set">Region set</label>
+      <select id="rs-set">
+        <option value="genomewide">Genome-wide (all 6.48M variants · pre-computed)</option>
+        <option value="HAR">Human Accelerated Regions (HAR, n=2,734)</option>
+        <option value="__upload">Upload a BED file…</option>
+      </select>
+    </div>
+    <div class="vf-field" id="rs-filewrap" style="display:none"><label for="rs-file">BED file</label><input type="file" id="rs-file" accept=".bed,.txt,.tsv"></div>
+    <div class="vf-field"><label for="rs-model">Evo2 model</label>
+      <select id="rs-model">
+        <option value="Evo2_40B_AvgRC_Delta">40B · avgRC</option>
+        <option value="Evo2_40B_NoRC_Delta">40B · noRC</option>
+        <option value="Evo2_40B_WeightedRC_Delta">40B · wtRC</option>
+        <option value="Evo2_7B_NoRC_Delta">7B · noRC</option>
+        <option value="Evo2_7B_AvgRC_Delta">7B · avgRC</option>
+        <option value="Evo2_7B_WeightedRC_Delta">7B · wtRC</option>
+      </select>
+    </div>
+    <button type="button" id="rs-go">Analyze</button>
+  </form>
+  <p id="rs-status" class="evo2-help">A BED needs at least 3 columns: chromosome, start, end (tab/space separated; “chr” prefix optional).</p>
+
+  <div id="rs-tabs" class="evo2-tabs" style="display:none">
+    <button class="evo2-tab is-active" data-tab="t4">4 · Conservation</button>
+    <button class="evo2-tab" data-tab="t5">5 · Allele age</button>
+    <button class="evo2-tab" data-tab="t6">6 · Allele age by frequency</button>
+    <button class="evo2-tab" data-tab="t7">7 · Functional property</button>
+  </div>
+
+  <section class="evo2-tabpane is-active" data-pane="t4">
+    <div class="evo2-chart-row"><div id="t4_phast" class="evo2-chart" style="height:360px;flex:1"></div><div id="t4_phylo" class="evo2-chart" style="height:360px;flex:1"></div></div>
+    <div id="t4_pair" class="evo2-stats-tbl"></div>
+    <p class="evo2-help">Spearman ρ between |Evo2 Δ| and conservation (phastCons / phyloP) per model configuration, with bootstrap mean ± SEM (Task 4 retains the MAF_tier stratification and bootstrap resampling of the reference 3A/3B code). Paired bootstrap pairwise tests below (BH-adjusted).</p>
+  </section>
+  <section class="evo2-tabpane" data-pane="t5" style="display:none">
+    <div class="evo2-chart-row"><div id="t5_geva" class="evo2-chart" style="height:380px;flex:1"></div><div id="t5_sds" class="evo2-chart" style="height:380px;flex:1"></div></div>
+    <div id="t5_tbl" class="evo2-stats-tbl"></div>
+    <p class="evo2-help">Spearman ρ between Evo2 Δ (selected model) and allele age (<b>GEVA AgeMean_Jnt</b>) / recent selection (<b>SDS_Final</b>, re-signed to this database's allele orientation), for All / LCR / non-LCR subsets. LCR = RepeatMasker <b>repFamily</b> present. Estimates use <b>site subsampling, not bootstrap resampling</b>: each of 2,000 draws takes 80% of the sites — without replacement — from every CHR × AF_bin stratum (genome-wide: every AF_bin stratum), and ρ is recomputed on the pooled draw. The reported ρ is the full-data estimate; the bars show the 2.5/97.5 percentile interval of the subsampling distribution. <b>A result is called significant when that interval excludes zero</b>; the directional rate mean(ρ≤0) is reported for reference only (floored at 1/(B+1)) and is not a conventional p-value.</p>
+  </section>
+  <section class="evo2-tabpane" data-pane="t6" style="display:none">
+    <div class="evo2-chart-row"><div id="t6_geva" class="evo2-chart" style="height:380px;flex:1"></div><div id="t6_sds" class="evo2-chart" style="height:380px;flex:1"></div></div>
+    <div id="t6_tbl" class="evo2-stats-tbl"></div>
+    <p class="evo2-help">The same subsampling analysis split by <b>AF_bin</b> — equal-width bins of the Non-Finnish-European allele frequency (AF_0-0.2 … AF_0.8-1.0), the stratification variable used by the reference analysis. ρ is the full-data estimate per bin; the interval is the 2.5/97.5 percentile of the subsampling distribution, and a bin is significant when its interval excludes zero.</p>
+  </section>
+  <section class="evo2-tabpane" data-pane="t7" style="display:none">
+    <div id="t7_G" class="evo2-chart" style="height:380px;"></div><div id="t7_Gtbl" class="evo2-stats-tbl"></div>
+    <div id="t7_H" class="evo2-chart" style="height:340px;margin-top:.6rem"></div><div id="t7_Htbl" class="evo2-stats-tbl"></div>
+    <p class="evo2-help">log2|Evo2 Δ| stratified by functional region (G) and coding consequence (H), with group mean ± SEM, reference lines (selected-set / genome-wide), and one-sample tests (BH-adjusted).</p>
+  </section>
+
+  <div id="rs-export" class="evo2-export" style="display:none">Export&nbsp;&#9656;
+    <button type="button" data-png="t4_phast">T4 phastCons</button>
+    <button type="button" data-png="t4_phylo">T4 phyloP</button>
+    <button type="button" data-png="t5_geva">T5 GEVA</button>
+    <button type="button" data-png="t5_sds">T5 SDS</button>
+    <button type="button" data-png="t6_geva">T6 GEVA</button>
+    <button type="button" data-png="t6_sds">T6 SDS</button>
+    <button type="button" data-png="t7_G">T7 region</button>
+    <button type="button" id="rs-dljson">analysis JSON</button>
+  </div>
+  <p id="rs-links" class="evo2-foot-meta"></p>
+
+  {% raw %}
+  <style>
+  .evo2-tabs{display:flex;gap:.4rem;margin:.4rem 0 1rem;flex-wrap:wrap}
+  .evo2-tab{padding:.5rem .9rem;border:1px solid #E2E8F0;background:#fff;border-radius:8px;cursor:pointer;font-size:.92rem;color:#475569}
+  .evo2-tab.is-active{background:#2563EB;color:#fff;border-color:#2563EB}
+  .evo2-chart-row{display:flex;gap:1rem}
+  .evo2-chart{min-width:0}
+  @media(max-width:640px){.evo2-chart-row{flex-direction:column}}
+  .evo2-stats-tbl{overflow-x:auto;margin:.2rem 0 .6rem}
+  .evo2-stats-tbl table{border-collapse:collapse;font-size:.82rem;width:100%}
+  .evo2-stats-tbl th,.evo2-stats-tbl td{border-bottom:1px solid #EEF2F7;padding:.3rem .55rem;text-align:right;white-space:nowrap}
+  .evo2-stats-tbl th:first-child,.evo2-stats-tbl td:first-child{text-align:left}
+  .evo2-stats-tbl th{color:#475569;font-weight:600;background:#F8FAFC}
+  .evo2-sig{color:#C0392B;font-weight:700}.evo2-nsig{color:#94A3B8}
+  .evo2-export{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:.2rem 0 .6rem;font-size:.82rem;color:#475569}
+  .evo2-export button{font-size:.8rem;padding:.32rem .6rem;border:1px solid #CBD5E1;background:#fff;border-radius:6px;cursor:pointer;color:#1D4ED8}
+  .evo2-export button:hover{background:#F1F5F9}
+  </style>
+  <script>
+  const g=id=>document.getElementById(id), status=document.getElementById('rs-status');
+  const fmtp=p=>p==null?'—':(p<1e-4?p.toExponential(1):p.toFixed(4));
+  const star=p=>p==null?'':(p<1e-3?'***':p<1e-2?'**':p<0.05?'*':'n.s.');
+  const L=(t,xt,yt,ex={})=>Object.assign({title:{text:t,font:{size:14,color:'#0F172A'}},margin:{t:42,r:16,b:64,l:60},
+    font:{family:'ui-sans-serif,system-ui,Arial',color:'#1E293B'},paper_bgcolor:'#fff',plot_bgcolor:'#fff',
+    xaxis:{title:xt,gridcolor:'#EEF2F7',zeroline:false,automargin:true},yaxis:{title:yt,gridcolor:'#EEF2F7',zeroline:false}},ex);
+  const zeroline=y0=>({type:'line',xref:'paper',x0:0,x1:1,y0:0,y1:0,line:{color:'#94A3B8',dash:'dash',width:1}});
+
+  g('rs-set').addEventListener('change',()=>{g('rs-filewrap').style.display=(g('rs-set').value==='__upload')?'':'none';});
+  document.querySelectorAll('.evo2-tab').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.evo2-tab').forEach(x=>x.classList.remove('is-active')); b.classList.add('is-active');
+    document.querySelectorAll('.evo2-tabpane').forEach(p=>p.style.display=(p.dataset.pane===b.dataset.tab)?'':'none');
+    window.dispatchEvent(new Event('resize'));
+  }));
+
+  function rhoBar(divId,configs,title){
+    const x=configs.map(c=>c.label),y=configs.map(c=>c.rho),e=configs.map(c=>c.sem);
+    Plotly.newPlot(divId,[{type:'bar',x:x,y:y,error_y:{type:'data',array:e,thickness:1.3,width:4,color:'#0F172A'},
+      marker:{color:y.map(v=>v>=0?'#2563EB':'#C0392B')}}],
+      Object.assign(L(title,'','Spearman ρ'),{shapes:[zeroline()],xaxis:{tickangle:-30,automargin:true}}),{responsive:true,displayModeBar:false});
+  }
+  function violins(divId,items,catKey,title){
+    const traces=items.filter(it=>it.samples&&it.samples.length).map(it=>({type:'violin',y:it.samples,name:it[catKey],
+      box:{visible:true},meanline:{visible:true},points:false,spanmode:'soft',width:0.8}));
+    const pts={type:'scatter',mode:'markers',x:items.map(it=>it[catKey]),y:items.map(it=>it.rho),
+      marker:{color:'#0F172A',size:7,symbol:'diamond'},name:'observed ρ',showlegend:false};
+    Plotly.newPlot(divId,traces.concat([pts]),Object.assign(L(title,'','Spearman ρ'),{shapes:[zeroline()],showlegend:false,xaxis:{automargin:true}}),{responsive:true,displayModeBar:false});
+  }
+  function boxPanel(divId,tblId,panel,selMean,gwMean,title,yt){
+    if(!panel.length){g(divId).innerHTML='<p class="evo2-help">No groups with enough variants.</p>';g(tblId).innerHTML='';return;}
+    const names=panel.map(x=>x.name);
+    // mean ± SEM only (no quantile box) per v1.3 spec
+    const mean={type:'scatter',x:names,y:panel.map(x=>x.box.mean),mode:'markers',error_y:{type:'data',array:panel.map(x=>x.box.sem),color:'#0F172A',thickness:1.5,width:7},marker:{color:'#2563EB',size:9,symbol:'circle',line:{color:'#1D4ED8',width:1}},name:'mean ± SEM'};
+    const sl={type:'scatter',x:names,y:names.map(_=>selMean),mode:'lines',line:{color:'#1D4ED8',dash:'dash',width:1.4},name:'selected-set mean'};
+    const gw={type:'scatter',x:names,y:names.map(_=>gwMean),mode:'lines',line:{color:'#C0392B',dash:'dot',width:1.4},name:'genome-wide mean'};
+    Plotly.newPlot(divId,[mean,sl,gw],L(title,'',yt,{showlegend:true,legend:{orientation:'h',y:-0.34,x:0.5,xanchor:'center',font:{size:10}},margin:{t:42,r:16,b:104,l:60},xaxis:{tickangle:-25,automargin:true}}),{responsive:true,displayModeBar:false});
+    let h='<table><thead><tr><th>group</th><th>n</th><th>mean ± SEM</th><th>vs selected</th><th>vs genome-wide</th></tr></thead><tbody>';
+    panel.forEach(x=>{const c=t=>`${t.test}, ${fmtp(t.p)}, ${fmtp(t.p_adj)} <span class="${(t.p_adj!=null&&t.p_adj<0.05)?'evo2-sig':'evo2-nsig'}">${star(t.p_adj)}</span>`;
+      h+=`<tr><td>${x.name}</td><td>${x.box.n.toLocaleString()}</td><td>${x.box.mean.toFixed(2)} ± ${x.box.sem.toFixed(2)}</td><td>${c(x.test_vs_selected)}</td><td>${c(x.test_vs_genomewide)}</td></tr>`;});
+    g(tblId).innerHTML=h+'</tbody></table>';
+  }
+  function pairTable(divId,pw){
+    let h='<table><thead><tr><th>comparison</th><th>Δρ</th><th>p</th><th>p<sub>adj</sub></th></tr></thead><tbody>';
+    pw.forEach(p=>{h+=`<tr><td>${p.a} vs ${p.b}</td><td>${p.delta_rho==null?'—':p.delta_rho.toFixed(3)}</td><td>${fmtp(p.p)}</td><td>${fmtp(p.p_adj)} <span class="${(p.p_adj!=null&&p.p_adj<0.05)?'evo2-sig':'evo2-nsig'}">${star(p.p_adj)}</span></td></tr>`;});
+    g(divId).innerHTML=h+'</tbody></table>';
+  }
+  const dirCls=d=>d==='Interval includes zero'?'evo2-nsig':'evo2-sig';
+  const ci=r=>(r.ci_lo==null?'—':'['+r.ci_lo.toFixed(4)+', '+r.ci_hi.toFixed(4)+']');
+  function ageTable(m,label){
+    let h=`<table><caption style="text-align:left;color:#475569;font-size:.8rem;padding:.25rem 0">${label} — site subsampling (80% within each CHR × AF_bin, ${(m.subsets[0]&&m.subsets[0].B)||2000} draws, no replacement); ρ is the full-data estimate. Variants excluded (missing metric): ${m.n_excluded.toLocaleString()}</caption><thead><tr><th>subset</th><th>n</th><th>n per draw</th><th>ρ</th><th>95% interval</th><th>rate(ρ≤0)</th><th>significance</th></tr></thead><tbody>`;
+    m.subsets.forEach(s=>{h+=`<tr><td>${s.subset}</td><td>${s.n.toLocaleString()}</td><td>${(s.n_each||0).toLocaleString()}</td><td>${s.rho==null?'—':s.rho.toFixed(4)}</td><td>${ci(s)}</td><td>${s.p_boot==null?'—':fmtp(s.p_boot)}</td><td class="${dirCls(s.direction)}">${s.direction||'—'}</td></tr>`;});
+    const c=m.compare_lcr_vs_nonlcr;
+    if(c) h+=`<tr><td>LCR vs non-LCR</td><td>—</td><td>—</td><td>Δρ=${c.delta_rho.toFixed(4)}</td><td>${ci(c)}</td><td>—</td><td class="${c.excludes_zero?'evo2-sig':'evo2-nsig'}">${c.excludes_zero?'Interval excludes zero':'Interval includes zero'}</td></tr>`;
+    return h+'</tbody></table>';
+  }
+  function binTableHTML(label,t6){
+    let h=`<table><caption style="text-align:left;color:#475569;font-size:.8rem;padding:.25rem 0">${label} — Spearman ρ by allele-frequency bin (AF_bin = equal-width Non-Finnish-European AF); site subsampling, 95% interval</caption><thead><tr><th>AF bin</th><th>n</th><th>ρ</th><th>95% interval</th><th>rate(ρ≤0)</th><th>significance</th></tr></thead><tbody>`;
+    t6.bins.forEach(b=>{h+=`<tr><td>${b.bin}</td><td>${b.n.toLocaleString()}</td><td>${b.rho==null?'—':b.rho.toFixed(4)}</td><td>${ci(b)}</td><td>${b.p_boot==null?'—':fmtp(b.p_boot)}</td><td class="${dirCls(b.direction)}">${b.direction||'—'}</td></tr>`;});
+    return h+'</tbody></table>';
+  }
+  function dlPNG(divId,name){Plotly.downloadImage(g(divId),{format:'png',filename:name,width:1100,height:700,scale:2});}
+  function dlBlob(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();}
+
+  // ---- pre-computed genome-wide (R-aligned, all 6 models) ----
+  function gwBar(divId,items,xk,yk,title,yt,err){
+    const y=items.map(i=>i[yk]);
+    const tr={type:'bar',x:items.map(i=>i[xk]),y:y,marker:{color:y.map(v=>(v||0)>=0?'#2563EB':'#C0392B')},
+      text:items.map(i=>i.n?('n='+i.n.toLocaleString()):''),textposition:'outside',textfont:{size:10,color:'#475569'},
+      cliponaxis:false,hovertemplate:'%{x}<br>%{y:.3f}<br>%{text}<extra></extra>'};
+    if(err) tr.error_y={type:'data',symmetric:false,array:items.map(i=>i.ci_hi!=null?i.ci_hi-i[yk]:0),
+      arrayminus:items.map(i=>i.ci_lo!=null?i[yk]-i.ci_lo:0),color:'#0F172A',thickness:1.3};
+    Plotly.newPlot(divId,[tr],Object.assign(L(title,'',yt),{shapes:[zeroline()],xaxis:{tickangle:-25,automargin:true},margin:{t:46,r:16,b:100,l:60}}),{responsive:true,displayModeBar:false});
+  }
+  function strataTable(label,items){
+    let h=`<table><caption style="text-align:left;color:#475569;font-size:.8rem;padding:.25rem 0">${label} — Spearman by MAF tier</caption><thead><tr><th>stratum</th><th>n</th><th>ρ</th><th>p</th></tr></thead><tbody>`;
+    items.forEach(r=>h+=`<tr><td>${r.stratum}</td><td>${r.n.toLocaleString()}</td><td>${r.rho==null?'—':r.rho.toFixed(3)}</td><td>${fmtp(r.p)}</td></tr>`);
+    return h+'</tbody></table>';
+  }
+  function gwAgeTable(label,items,xk){
+    let h=`<table><caption style="text-align:left;color:#475569;font-size:.8rem;padding:.25rem 0">${label} — site subsampling (80% of sites within each AF_bin, B=2000, no replacement); ρ is the full-data estimate, interval is the 2.5/97.5 percentile of the subsampling distribution</caption><thead><tr><th>${xk==='af_bin'?'AF bin':'region'}</th><th>n</th><th>n per draw</th><th>ρ</th><th>95% interval</th><th>rate(ρ≤0)</th><th>significance</th></tr></thead><tbody>`;
+    items.forEach(r=>h+=`<tr><td>${r[xk]}</td><td>${(r.n||0).toLocaleString()}</td><td>${(r.n_each||0).toLocaleString()}</td><td>${r.rho==null?'—':r.rho.toFixed(4)}</td><td>${ci(r)}</td><td>${r.p_boot==null?'—':fmtp(r.p_boot)}</td><td class="${dirCls(r.direction)}">${r.direction||'—'}</td></tr>`);
+    return h+'</tbody></table>';
+  }
+  function catTable(label,items){
+    let h=`<table><caption style="text-align:left;color:#475569;font-size:.8rem;padding:.25rem 0">${label}</caption><thead><tr><th>category</th><th>n</th><th>mean |Δ|</th><th>median</th><th>p</th><th>p<sub>adj</sub></th></tr></thead><tbody>`;
+    items.forEach(r=>h+=`<tr><td>${r.category}</td><td>${r.n.toLocaleString()}</td><td>${r.mean.toFixed(2)}</td><td>${r.median.toFixed(2)}</td><td>${fmtp(r.p)}</td><td>${r.p_adj==null?'—':fmtp(r.p_adj)} <span class="${(r.p_adj!=null&&r.p_adj<0.05)?'evo2-sig':'evo2-nsig'}">${star(r.p_adj)}</span></td></tr>`);
+    return h+'</tbody></table>';
+  }
+  function renderGW(d){
+    g('rs-tabs').style.display='flex';
+    status.textContent=`Genome-wide (pre-computed, R-aligned) · model ${d.model_label} · ${d.n_total.toLocaleString()} variants · allele age on ${d.n_pruned.toLocaleString()} GEVA / ${(d.n_pruned_sds||0).toLocaleString()} SDS pruned HM3 SNPs`;
+    gwBar('t4_phast',d.task4A_phastCons,'stratum','rho','Task 4A — Spearman(|Δ|, phastCons) by MAF tier','Spearman ρ');
+    gwBar('t4_phylo',d.task4B_phyloP,'stratum','rho','Task 4B — Spearman(RAW Δ × minor-allele sign, phyloP) by MAF tier','Spearman ρ');
+    g('t4_pair').innerHTML=strataTable('phastCons (|Δ|)',d.task4A_phastCons)+strataTable('phyloP (raw Δ)',d.task4B_phyloP);
+    gwBar('t5_geva',d.task5_GEVA,'region','rho','Task 5C — Spearman(Δ, GEVA age) by region (pruned HM3)','Spearman ρ',true);
+    g('t5_sds').style.display=''; gwBar('t5_sds',d.task5_SDS,'region','rho','Task 5D — Spearman(Δ, SDS) by region (pruned HM3)','Spearman ρ',true);
+    g('t5_tbl').innerHTML=gwAgeTable('GEVA (allele age)',d.task5_GEVA,'region')+gwAgeTable('SDS (selection)',d.task5_SDS,'region');
+    g('t6_geva').style.display=''; g('t6_sds').style.display='';
+    gwBar('t6_geva',d.task6_GEVA,'af_bin','rho','Task 6 — Spearman(Δ, GEVA age) by AF bin (pruned HM3)','Spearman ρ',true);
+    gwBar('t6_sds',d.task6_SDS,'af_bin','rho','Task 6 — Spearman(Δ, SDS) by AF bin (pruned HM3)','Spearman ρ',true);
+    g('t6_tbl').innerHTML=gwAgeTable('GEVA (allele age)',d.task6_GEVA,'af_bin')+gwAgeTable('SDS (selection)',d.task6_SDS,'af_bin');
+    gwBar('t7_G',d.task7G_cCRE,'category','mean','Task 7G — |Δ| by ENCODE cCRE category (mean)','|Evo2 Δ| mean');
+    g('t7_Gtbl').innerHTML=catTable('cCRE — Mann-Whitney vs Intergenic (BH-adjusted)',d.task7G_cCRE);
+    gwBar('t7_H',d.task7H_coding,'category','mean','Task 7H — |Δ| by coding consequence (mean)','|Evo2 Δ| mean');
+    g('t7_Htbl').innerHTML=catTable('coding consequence — Mann-Whitney vs the rest',d.task7H_coding);
+    g('rs-links').innerHTML='Genome-wide results are pre-computed offline for all 6 models following the reference R code — instant, no per-request calculation. Use the export buttons above.';
+    window._D=d; g('rs-export').style.display='flex';
+    setTimeout(()=>window.dispatchEvent(new Event('resize')),60);
+  }
+
+  function render(d){
+    g('t5_sds').style.display=''; g('t6_sds').style.display='';
+    g('rs-tabs').style.display='flex';
+    status.textContent=`${d.query.label}: ${d.query.n_regions?d.query.n_regions.toLocaleString()+' regions → ':''}${d.query.n.toLocaleString()} variants · model ${d.query.model_label} · GEVA n=${d.query.n_geva.toLocaleString()}, SDS n=${d.query.n_sds.toLocaleString()}${d.query.truncated?' · (capped)':''}`;
+    rhoBar('t4_phast',d.task4.phastCons.configs,'Task 4A — |Δ| vs phastCons100way');
+    rhoBar('t4_phylo',d.task4.phyloP.configs,'Task 4B — |Δ| vs phyloP100way');
+    pairTable('t4_pair',d.task4.phastCons.pairwise);
+    violins('t5_geva',d.task5.GEVA.subsets,'subset','Task 5C — Δ vs GEVA age (All / LCR / non-LCR)');
+    violins('t5_sds',d.task5.SDS.subsets,'subset','Task 5D — Δ vs SDS (All / LCR / non-LCR)');
+    g('t5_tbl').innerHTML=ageTable(d.task5.GEVA,'GEVA (allele age)')+ageTable(d.task5.SDS,'SDS (selection)');
+    violins('t6_geva',d.task6.GEVA.bins,'bin','Task 6 — Δ vs GEVA age by AF bin');
+    violins('t6_sds',d.task6.SDS.bins,'bin','Task 6 — Δ vs SDS by AF bin');
+    g('t6_tbl').innerHTML=binTableHTML('GEVA (allele age)',d.task6.GEVA)+binTableHTML('SDS (selection)',d.task6.SDS);
+    boxPanel('t7_G','t7_Gtbl',d.task7.panelG,d.task7.ref_selected,d.task7.ref_genomewide,'Task 7G — log2|Δ| by functional region',d.task7.unit);
+    boxPanel('t7_H','t7_Htbl',d.task7.panelH,d.task7.ref_selected,d.task7.ref_genomewide,'Task 7H — log2|Δ| by coding consequence',d.task7.unit);
+    g('rs-links').innerHTML=`Dataset ${d.dataset_version||''} · analysis runs server-side (numpy/scipy)`;
+    window._D=d; g('rs-export').style.display='flex';
+  }
+
+  async function run(){
+    const model=g('rs-model').value, set=g('rs-set').value;
+    status.textContent='Analyzing …';
+    if(set==='genomewide'){
+      try{
+        const d=await (await fetch('/api/regionset/genomewide?model='+encodeURIComponent(model))).json();
+        if(d.error){status.textContent=d.error;g('rs-tabs').style.display='none';return;}
+        renderGW(d);
+      }catch(e){status.textContent='Could not load pre-computed genome-wide results.';}
+      return;
+    }
+    try{
+      let resp;
+      if(set==='__upload'){
+        const f=g('rs-file').files[0];
+        if(!f){status.textContent='Choose a BED file first.';return;}
+        const text=await f.text();
+        resp=await fetch('/api/regionset/analyze?model='+model+'&label='+encodeURIComponent(f.name),{method:'POST',body:text});
+      } else {
+        resp=await fetch('/api/regionset/analyze?set='+encodeURIComponent(set)+'&model='+model);
+      }
+      const d=await resp.json();
+      if(d.error){status.textContent=d.error;g('rs-tabs').style.display='none';return;}
+      render(d);
+    }catch(e){status.textContent='Could not run analysis.';}
+  }
+  g('rs-go').addEventListener('click',run);
+  document.querySelectorAll('#rs-export [data-png]').forEach(b=>b.addEventListener('click',()=>dlPNG(b.dataset.png,'evo2_regionset_'+b.dataset.png)));
+  g('rs-dljson').addEventListener('click',()=>{if(window._D)dlBlob('evo2_regionset_analysis.json',JSON.stringify(window._D,null,2),'application/json');});
+  g('rs-model').addEventListener('change',()=>{ if(g('rs-tabs').style.display!=='none') run(); });
+  run(); // auto-run HAR on load
+  </script>
+  {% endraw %}
+</div>
+{% endblock %}

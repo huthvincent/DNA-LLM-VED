@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Evo2 Variant Effect Database{% endblock %}
+
+{% block body_class %}evo2-home{% endblock %}
+
+{% block content %}
+<div class="evo2-wrap">
+
+  <div class="evo2-masthead">
+    <div class="evo2-brand">
+      <span class="evo2-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 3c0 6 14 12 14 18M19 3c0 6-14 12-14 18"/><path d="M6.5 6h11M6 10h12M6 14h12M6.5 18h11"/></svg>
+      </span>
+      <span class="evo2-wordmark">Evo2 Variant Effect Database</span>
+      <nav class="evo2-nav" aria-label="Primary">
+        <a href="/viewer">Region viewer</a>
+        <a href="/about">About &amp; feature scheme</a>
+        <a href="/evo2">Run SQL</a>
+      </nav>
+    </div>
+    <div class="evo2-tagrow">
+      <p class="evo2-tagline">Zero-shot variant-effect scores for 6.48&nbsp;million common human variants, from the Evo2 DNA foundation model.</p>
+      <span class="evo2-release">GRCh38 · chr1–22 · v1 · 2026-06</span>
+    </div>
+  </div>
+
+  <section class="evo2-hero" aria-labelledby="evo2-h1">
+    <h1 id="evo2-h1">6.48&nbsp;million human variants, scored by a DNA foundation model.</h1>
+    <p class="evo2-sub">Look up any common autosomal variant by rsID, gene, or genomic region and see how strongly Evo2 predicts it disrupts the genome &mdash; no SQL required. Scores are zero-shot model likelihoods for research use, not clinical predictions.</p>
+  </section>
+
+  <style>
+    .evo2-modules{display:flex;gap:1rem;flex-wrap:wrap;margin:0 0 1.6rem}
+    .evo2-modcard{flex:1 1 280px;display:block;text-decoration:none;border:1px solid #E2E8F0;border-left:4px solid #2563EB;border-radius:10px;padding:1rem 1.1rem;background:#fff;transition:box-shadow .15s,transform .15s}
+    .evo2-modcard:hover{box-shadow:0 6px 22px rgba(37,99,235,.12);transform:translateY(-1px)}
+    .evo2-modtag{display:inline-block;font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:#2563EB;font-weight:700}
+    .evo2-modtitle{display:block;font-size:1.08rem;font-weight:700;color:#0F172A;margin:.15rem 0 .35rem}
+    .evo2-moddesc{display:block;font-size:.9rem;color:#475569;line-height:1.45}
+  </style>
+  <section class="evo2-modules" aria-label="Interactive analysis modules">
+    <a class="evo2-modcard" href="/viewer">
+      <span class="evo2-modtag">Interactive analysis</span>
+      <span class="evo2-modtitle">Regional-Level Analysis &rarr;</span>
+      <span class="evo2-moddesc">Query a gene or genomic window and get, live: |Δ| stratified by region &amp; consequence with mean&plusmn;SEM and one-sample tests, a 6-model Spearman concordance heatmap, and the locus landscape.</span>
+    </a>
+    <a class="evo2-modcard" href="/regionset">
+      <span class="evo2-modtag">Interactive analysis</span>
+      <span class="evo2-modtitle">Region-Set Analysis &rarr;</span>
+      <span class="evo2-moddesc">Pick a built-in region set (HAR) or upload your own BED: conservation, allele age (GEVA / SDS), allele-frequency and functional-property stratification with bootstrap statistics.</span>
+    </a>
+    <a class="evo2-modcard" href="/gwas">
+      <span class="evo2-modtag">Interactive analysis</span>
+      <span class="evo2-modtitle">GWAS / Heritability &rarr;</span>
+      <span class="evo2-moddesc">S-LDSC coefficient z-score for the Evo2 annotation across UKB, FinnGen &amp; MVP: search a trait to see its rank, percentile and z-score distribution within its category and the whole database.</span>
+    </a>
+    <a class="evo2-modcard" href="/coloc">
+      <span class="evo2-modtag">Interactive analysis</span>
+      <span class="evo2-modtitle">Evo2 × GWAS co-localization &rarr;</span>
+      <span class="evo2-moddesc">In a genomic region, line up the Evo2 Δ track, GWAS −log10(P) track(s) and the annotation track — overlay one or more traits (UKB / FinnGen / MVP) to see whether disruptive variants sit on association peaks.</span>
+    </a>
+  </section>
+
+  <section class="evo2-search" aria-label="Search the database">
+    <form class="evo2-card" action="/evo2/lookup_by_rsid" method="get" role="search">
+      <span class="evo2-card-title">Look up by rsID</span>
+      <label for="f-rsid">dbSNP rsID</label>
+      <input id="f-rsid" type="text" name="rsid" value="rs429358" placeholder="rs429358" autocomplete="off" spellcheck="false">
+      <p class="evo2-help">Exact dbSNP rsID.</p>
+      <button type="submit">Look up</button>
+    </form>
+    <form class="evo2-card" action="/viewer" method="get" role="search">
+      <span class="evo2-card-title">Variants in a gene</span>
+      <label for="f-gene">Gene symbol</label>
+      <input id="f-gene" type="text" name="gene" value="APOE" placeholder="APOE" autocomplete="off" spellcheck="false">
+      <p class="evo2-help">Auto-plots the gene's variants.</p>
+      <button type="submit">Plot gene</button>
+    </form>
+    <form class="evo2-card" action="/viewer" method="get" role="search">
+      <span class="evo2-card-title">Plot a genomic region</span>
+      <div class="evo2-region">
+        <div><label for="f-chr">Chr</label><input id="f-chr" type="text" name="chr" value="19" placeholder="19" inputmode="numeric" autocomplete="off"></div>
+        <div><label for="f-start">Start</label><input id="f-start" type="text" name="start" value="43900000" placeholder="43900000" inputmode="numeric" autocomplete="off"></div>
+        <div><label for="f-end">End</label><input id="f-end" type="text" name="end" value="45900000" placeholder="45900000" inputmode="numeric" autocomplete="off"></div>
+      </div>
+      <p class="evo2-help">GRCh38 coordinates &rarr; an interactive Δ landscape.</p>
+      <button type="submit">Plot region</button>
+    </form>
+    <form class="evo2-card" action="/evo2/variants" method="get" role="search">
+      <span class="evo2-card-title">Search everything</span>
+      <label for="f-search">Free-text search</label>
+      <input id="f-search" type="search" name="_search" value="APOE" placeholder="APOE, rs429358" autocomplete="off">
+      <p class="evo2-help">Matches rsID, gene symbol, or amino-acid change.</p>
+      <button type="submit">Search</button>
+    </form>
+  </section>
+
+  <section class="evo2-section" aria-labelledby="evo2-note-h">
+    <h2 id="evo2-note-h">What am I looking at?</h2>
+    <div class="evo2-note-grid">
+      <div>
+        <p>Evo2 is a DNA language model. For each variant we feed the <strong>reference</strong> and <strong>alternate</strong> sequence to the model and record <code>delta = ALT log-likelihood &minus; REF log-likelihood</code>.</p>
+        <p>A <strong>more negative</strong> delta means the model finds the alternate allele more surprising &mdash; i.e. more likely to be disruptive. A delta <strong>near zero</strong> means the change looks tolerated. Delta is a relative model score, <strong>not</strong> a calibrated probability or a pathogenicity call.</p>
+      </div>
+      <figure class="evo2-legend" aria-label="Delta score color scale, from disfavored on the left to tolerated on the right">
+        <div class="evo2-legend-bar" role="img" aria-label="Diverging color scale from red (disfavored) through gray (neutral) to green (tolerated)">
+          <span style="background:#A32D2D"></span><span style="background:#E24B4A"></span><span style="background:#F09595"></span><span style="background:#C9CCD6"></span><span style="background:#97C459"></span><span style="background:#639922"></span>
+        </div>
+        <figcaption class="evo2-legend-labels"><span>more negative<br>disfavored</span><span>0<br>neutral</span><span>positive<br>tolerated</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="evo2-section" aria-labelledby="evo2-models-h">
+    <h2 id="evo2-models-h">The scores: two models &times; three strand strategies</h2>
+    <p>Every variant is scored by <strong>both</strong> Evo2 model sizes, each under <strong>three</strong> ways of handling DNA's two strands. The table therefore carries the full set of delta scores side by side (each also has its raw ALT and REF log-likelihood):</p>
+    <table class="evo2-matrix">
+      <thead><tr><th>Strand strategy</th><th>Evo2-7B (delta)</th><th>Evo2-40B (delta)</th></tr></thead>
+      <tbody>
+        <tr><th>noRC</th><td>Evo2_7B_NoRC_Delta</td><td>Evo2_40B_NoRC_Delta</td></tr>
+        <tr><th>avgRC</th><td>Evo2_7B_AvgRC_Delta</td><td>Evo2_40B_AvgRC_Delta</td></tr>
+        <tr><th>weightRC</th><td>Evo2_7B_WeightedRC_Delta</td><td>Evo2_40B_WeightedRC_Delta</td></tr>
+      </tbody>
+    </table>
+    <ul class="evo2-defs">
+      <li><strong>7B / 40B</strong> &mdash; the two Evo2 model sizes (7 vs 40 billion parameters). 40B is the larger model and generally the stronger signal; the default ranking uses <code>|Evo2-40B noRC delta|</code>.</li>
+      <li><strong>RC = reverse complement.</strong> DNA is double-stranded, so the same variant can be read on the forward strand or on its complementary (reverse-complement) strand. Scoring both strands and combining gives a more stable estimate.</li>
+      <li><strong>noRC</strong> &mdash; forward strand only (no reverse-complement).</li>
+      <li><strong>avgRC</strong> &mdash; the average of the forward and reverse-complement scores.</li>
+      <li><strong>weightRC</strong> &mdash; a length-weighted combination of the forward and reverse-complement scores.</li>
+    </ul>
+    <p style="margin-top:.7rem"><a class="evo2-back" href="/about">Full feature scheme &amp; all 44 columns &rarr;</a></p>
+  </section>
+
+  <section class="evo2-examples" aria-labelledby="evo2-ex-h">
+    <h2 id="evo2-ex-h">Try an example</h2>
+    <div class="evo2-ex-grid">
+      <a class="evo2-ex" href="/evo2/lookup_by_rsid?rsid=rs429358"><span class="evo2-ex-title">rs429358</span><span class="evo2-ex-desc">The APOE-ε4 variant (Alzheimer's), by rsID.</span><code class="evo2-ex-url">/lookup_by_rsid</code></a>
+      <a class="evo2-ex" href="/viewer?gene=APOE"><span class="evo2-ex-title">APOE</span><span class="evo2-ex-desc">Plot a gene's common variants.</span><code class="evo2-ex-url">/viewer</code></a>
+      <a class="evo2-ex" href="/viewer?chr=19&amp;start=43900000&amp;end=45900000"><span class="evo2-ex-title">chr19:43.9&ndash;45.9 Mb</span><span class="evo2-ex-desc">Interactive Δ landscape &mdash; the APOE locus (n&approx;4,844; same as Fig 3d).</span><code class="evo2-ex-url">/viewer</code></a>
+      <a class="evo2-ex" href="/evo2/high_impact_coding"><span class="evo2-ex-title">High-impact coding</span><span class="evo2-ex-desc">Nonsynonymous / stopgain / startloss / stoploss.</span><code class="evo2-ex-url">/high_impact_coding</code></a>
+    </div>
+  </section>
+
+  <section class="evo2-stats" aria-label="Database scale">
+    <div class="evo2-stat"><span class="evo2-stat-n">6,475,578</span><span class="evo2-stat-l">variants scored</span></div>
+    <div class="evo2-stat"><span class="evo2-stat-n">2 &times; 3</span><span class="evo2-stat-l">models (7B/40B) &times; strategies</span></div>
+    <div class="evo2-stat"><span class="evo2-stat-n">chr&nbsp;1&ndash;22</span><span class="evo2-stat-l">autosomal, GRCh38</span></div>
+    <div class="evo2-stat"><span class="evo2-stat-n">~99%</span><span class="evo2-stat-l">noncoding (~37.9k coding)</span></div>
+  </section>
+  <p class="evo2-stats-sub">~2.61M intergenic · ~2.18M intronic · ~1.12M ncRNA-intronic · gnomAD NFE, MAF&nbsp;&ge;&nbsp;5%.</p>
+
+  <section class="evo2-browse" aria-labelledby="evo2-br-h">
+    <h2 id="evo2-br-h">Or browse by category</h2>
+    <nav class="evo2-pills" aria-label="Browse facets">
+      <a href="/evo2/variants?_facet=Functional_Annotation">Functional region</a>
+      <a href="/evo2/variants?_facet=Exonic_Function">Coding effect</a>
+      <a href="/evo2/variants?_facet=ENCODE_cCRE_Annotation">Regulatory element (cCRE)</a>
+      <a href="/evo2/variants?_facet=Repeat_Class">Repeat class</a>
+      <a class="evo2-pill-strong" href="/evo2/variants">Open the full table &rarr;</a>
+    </nav>
+  </section>
+
+  <section class="evo2-access" aria-labelledby="evo2-ac-h">
+    <h2 id="evo2-ac-h">Data &amp; programmatic access</h2>
+    <ul class="evo2-access-list">
+      <li><a href="/evo2/variants">Browse the table</a> &mdash; sort, filter, facet in the browser.</li>
+      <li><a href="/evo2">Run SQL</a> &mdash; arbitrary read-only queries.</li>
+      <li><a href="/evo2/variants.json">JSON API</a> &mdash; append <code>.json</code> to any page.</li>
+      <li><a href="/about">About &amp; feature scheme</a> &mdash; models, strand strategies, and all 44 columns explained.</li>
+    </ul>
+  </section>
+
+  <footer class="evo2-foot">
+    <p class="evo2-disclaimer" role="note"><strong>Research use only.</strong> Delta scores are uncalibrated zero-shot model outputs and are <strong>not</strong> validated for clinical or diagnostic interpretation.</p>
+    <p class="evo2-foot-meta">License: <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache-2.0</a>. Evo2 delta-likelihood scores over gnomAD NFE common variants (GRCh38, chr1&ndash;22).</p>
+    <p class="evo2-cite"><strong>Cite:</strong> Brixi et&nbsp;al., &ldquo;Genome modeling and design across all domains of life with Evo&nbsp;2&rdquo; (Arc Institute, 2025); and the Evo2 Variant Effect Database (GRCh38), 2026.</p>
+    <p class="evo2-foot-links"><a href="/evo2/variants">Browse</a> &middot; <a href="/evo2">SQL</a> &middot; <a href="/evo2/variants.json">JSON API</a> &middot; <a href="/about">About</a></p>
+  </footer>
+
+</div>
+{% endblock %}
