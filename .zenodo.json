@@ -1,0 +1,91 @@
+{
+  "title": "Evo2VED: code and supplementary materials for the accepted NAR Database Issue manuscript",
+  "upload_type": "software",
+  "version": "1.0.0",
+  "access_right": "open",
+  "license": "mit",
+  "creators": [
+    {
+      "name": "Zhu, Rui",
+      "affiliation": "Yale University"
+    },
+    {
+      "name": "Zhou, Xiaopu",
+      "affiliation": "The Hospital for Sick Children"
+    },
+    {
+      "name": "Liang, Ivy",
+      "affiliation": "Yale University"
+    },
+    {
+      "name": "Mendes de Aquino, Marla",
+      "affiliation": "The Hospital for Sick Children"
+    },
+    {
+      "name": "Engchuan, Worrawat",
+      "affiliation": "The Hospital for Sick Children"
+    },
+    {
+      "name": "Safarian, Nickie",
+      "affiliation": "The Hospital for Sick Children"
+    },
+    {
+      "name": "Zhou, Hang",
+      "affiliation": "Yale University"
+    },
+    {
+      "name": "Cheng, Haoyu",
+      "affiliation": "Yale University"
+    },
+    {
+      "name": "Trost, Brett",
+      "affiliation": "The Hospital for Sick Children; University of Toronto"
+    },
+    {
+      "name": "Breetvelt, Elemi",
+      "affiliation": "University of Toronto; The Hospital for Sick Children"
+    },
+    {
+      "name": "Vorstman, Jacob",
+      "affiliation": "University of Toronto; The Hospital for Sick Children"
+    },
+    {
+      "name": "Tang, Haixu",
+      "affiliation": "Indiana University"
+    },
+    {
+      "name": "O'Brien, Stephen J.",
+      "affiliation": "Cornell University; Indiana University"
+    },
+    {
+      "name": "Scherer, Stephen W.",
+      "affiliation": "The Hospital for Sick Children; University of Toronto"
+    },
+    {
+      "name": "Ohno-Machado, Lucila",
+      "affiliation": "Yale University"
+    }
+  ],
+  "description": "<p>Archival release of the code and final clean supplementary materials accompanying the accepted manuscript “Evo2VED: a database of DNA large language model-derived scores for variant interpretation” (Nucleic Acids Research; manuscript NAR-02968-Data-E-2026.R1, accepted 5 October 2026).</p><p>The repository contains the database construction pipeline, analysis and figure scripts, and Datasette web application code. The supplementary files in docs/supplementary/ are Evo2VED_Supplementary_Tables.xlsx (Content and Tables S1–S24) and Evo2VED_Supplementary_Material.docx (final clean version without tracked revisions, comments, or highlighting). These two files were provided by the corresponding author for final archival deposition.</p><p>The live database is available at https://dnallmved.org/. The genome-wide variant database and other externally distributed datasets are not included in this code archive. The GitHub repository remains available for ongoing development at https://github.com/huthvincent/DNA-LLM-VED.</p>",
+  "keywords": [
+    "Evo2VED",
+    "Evo2",
+    "DNA language models",
+    "human genetic variation",
+    "variant interpretation",
+    "Nucleic Acids Research"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://dnallmved.org/",
+      "relation": "isSupplementTo",
+      "resource_type": "other"
+    },
+    {
+      "identifier": "https://github.com/huthvincent/DNA-LLM-VED",
+      "relation": "isDerivedFrom",
+      "resource_type": "software"
+    }
+  ],
+  "language": "eng"
+}

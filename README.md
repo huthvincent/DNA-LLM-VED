@@ -8,7 +8,7 @@ non-Finnish-European MAF ≥ 5%, predominantly non-coding), integrated with Ense
 ENCODE cCRE, phastCons/phyloP, gnomAD v4.1 joint allele frequencies, allele age (GEVA), recent
 selection (SDS), and GWAS/S-LDSC results.
 
-**Live database:** <https://huthvincent-evo2-database.hf.space>
+**Live database:** <https://dnallmved.org/>
 
 This repository contains the **code** — the database build pipeline, the statistical analyses, the
 web application, and the figure scripts. It does not contain the variant data itself (see
@@ -163,12 +163,20 @@ subsets, so percentile bounds differ in the fourth decimal.
 
 ## Citation
 
-Manuscript in preparation. Please cite the live database until the paper appears:
+The manuscript was accepted by *Nucleic Acids Research* on 5 October 2026
+(manuscript NAR-02968-Data-E-2026.R1). The final article DOI will be added when available.
 
-> Evo2VED: a database of DNA large language model–derived scores for genome-wide variant
-> interpretation. <https://huthvincent-evo2-database.hf.space>
+> Evo2VED: a database of DNA large language model-derived scores for variant
+> interpretation. <https://dnallmved.org/>
 
-Supplementary material for the manuscript is in [`docs/supplementary/`](docs/supplementary).
+Final clean supplementary material for the accepted manuscript is in
+[`docs/supplementary/`](docs/supplementary):
+
+- `Evo2VED_Supplementary_Tables.xlsx`: Content and Tables S1–S24.
+- `Evo2VED_Supplementary_Material.docx`: the final clean supplementary document.
+
+The accepted-manuscript release archives the code and both supplementary files together.
+Zenodo metadata is provided in [`.zenodo.json`](.zenodo.json).
 
 ## License
 
