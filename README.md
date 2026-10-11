@@ -163,6 +163,12 @@ subsets, so percentile bounds differ in the fourth decimal.
 
 ## Citation
 
+The accepted-manuscript code and final clean supplementary materials are archived
+in Zenodo as version 1.0.0: **[10.5281/zenodo.23305001](https://doi.org/10.5281/zenodo.23305001)**.
+Use this fixed-version DOI to cite the archive accompanying the paper.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23305001.svg)](https://doi.org/10.5281/zenodo.23305001)
+
 The manuscript was accepted by *Nucleic Acids Research* on 5 October 2026
 (manuscript NAR-02968-Data-E-2026.R1). The final article DOI will be added when available.
 
